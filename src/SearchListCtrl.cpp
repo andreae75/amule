@@ -320,43 +320,58 @@ void CSearchListCtrl::UpdateItemColor(long index)
 		wxLIST_MASK_FORMAT);
 
 	if (GetItem(item)) {
-		CMuleColour newcol(wxSYS_COLOUR_WINDOWTEXT);
-
 		CSearchFile* file = reinterpret_cast<CSearchFile*>(GetItemData(index));
 
-		int red		= newcol.Red();
-		int green	= newcol.Green();
-		int blue	= newcol.Blue();
+		// Status colours are chosen per theme rather than by forcing a
+		// single channel of the system text colour to 255. That older
+		// approach yielded pure (0,255,0) / (255,0,255) on a light
+		// theme -- around 1.4:1 contrast against a white listbox, i.e.
+		// illegible -- and on a dark theme, where the text colour is
+		// already white, saturating a channel changed nothing at all,
+		// collapsing every status to plain white (cf. #640).
+		const bool darkBg = CMuleColour::IsDarkBackground();
+
+		CMuleColour newcol(wxSYS_COLOUR_WINDOWTEXT);
 
 		switch (file->GetDownloadStatus()) {
 		case CSearchFile::DOWNLOADED:
 			// File has already been downloaded. Mark as green.
-			green = 255;
+			newcol = darkBg ? CMuleColour(0x5F, 0xD7, 0x5F) : CMuleColour(0x1B, 0x7F, 0x1B);
 			break;
 		case CSearchFile::QUEUED:
 			// File is downloading.
 		case CSearchFile::QUEUEDCANCELED:
 			// File is downloading and has been canceled before.
 			// Mark as red
-			red = 255;
+			newcol = darkBg ? CMuleColour(0xFF, 0x6B, 0x6B) : CMuleColour(0xCC, 0x00, 0x00);
 			break;
 		case CSearchFile::CANCELED:
 			// File has been canceled. Mark as magenta.
-			red = 255;
-			blue = 255;
+			newcol = darkBg ? CMuleColour(0xFF, 0x77, 0xFF) : CMuleColour(0xA0, 0x00, 0xA0);
 			break;
-		default:
-			// File is new, colour after number of files
-			blue += file->GetSourceCount() * 5;
-			if ( blue > 255 ) {
-				blue = 255;
-			}
+		default: {
+			// File is new, colour after number of sources: shade from
+			// the theme's own text colour towards an accent blue so
+			// well-sourced results stand out. Keeps the old "+5 per
+			// source, saturating at 255" ramp, but interpolates instead
+			// of driving a blue channel that may already be maxed out.
+			const CMuleColour accent = darkBg
+				? CMuleColour(0x7F, 0xB0, 0xFF)
+				: CMuleColour(0x00, 0x50, 0xC8);
+			const uint32 sources = file->GetSourceCount();
+			const double ramp = (sources >= 51) ? 1.0 : (sources * 5) / 255.0;
+			newcol = CMuleColour(
+				(uint8_t)(newcol.Red()   + (accent.Red()   - newcol.Red())   * ramp),
+				(uint8_t)(newcol.Green() + (accent.Green() - newcol.Green()) * ramp),
+				(uint8_t)(newcol.Blue()  + (accent.Blue()  - newcol.Blue())  * ramp));
+			break;
+		}
 		}
 
 		// don't forget to set the item data back...
 		wxListItem newitem;
 		newitem.SetId( index );
-		newitem.SetTextColour( wxColour( red, green, blue ) );
+		newitem.SetTextColour( newcol );
 		SetItem( newitem );
 	}
 }

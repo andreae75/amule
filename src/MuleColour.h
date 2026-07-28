@@ -91,6 +91,20 @@ public:
 
 	bool IsBlack() const { return !Red() && !Blue() && !Green(); }
 
+	//! Perceived brightness (ITU-R BT.601 weighting). Cheap, and precise
+	//! enough to tell a light theme's background from a dark one's.
+	uint8_t Luminance() const { return (uint8_t)((m_red * 299 + m_green * 587 + m_blue * 114) / 1000); }
+
+	// An accent colour picked to read against a white listbox is
+	// unreadable on a dark theme, and vice versa. Callers that hard-code
+	// status colours need to know which way round the background is
+	// before choosing (same class of problem as the #640 selection
+	// paint).
+	static bool IsDarkBackground()
+	{
+		return CMuleColour(wxSYS_COLOUR_LISTBOX).Luminance() < 128;
+	}
+
 	bool IsSameAs(const CMuleColour& colour) const { return (Red() == colour.Red()) && (Green() == colour.Green()) && (Blue() == colour.Blue()); }
 
 	operator wxColour() const {
