@@ -26,6 +26,7 @@
 #define MULEVERSION_H
 
 #include "config.h"		// Needed for VERSION
+#include <common/ClientVersion.h>	// Needed for AMULE_FORK_TAG
 
 #define MULEVERSION_RETVAL_BEGIN	wxString ver(
 #define MULEVERSION_RETVAL_END		);
@@ -55,6 +56,10 @@ inline wxString GetMuleVersion()
 {
 	MULEVERSION_RETVAL_BEGIN
 		VERSION
+		// Fork identity, straight after the upstream version it is
+		// based on: "3.0.0 [NeRvOuX Edition 0.1.0] compiled with ...".
+		// Display path only -- see ClientVersion.h.
+		AMULE_FORK_TAG
 		" compiled with "
 
 // Figure out the toolkit used by wxWidgets...

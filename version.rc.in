@@ -37,6 +37,18 @@
 #define VER_ORIGINALFILENAME_STR	"amule.exe"
 #endif
 
+// Upstream's copyright stays first -- it is theirs, and this fork makes no
+// claim on it. The fork label is appended only so the binary is
+// recognisable in Explorer's file properties, which otherwise look
+// identical to an upstream build. AMULE_FORK_NAME comes from
+// ClientVersion.h (already included above, and defined outside its
+// RC_INVOKED guard) so the fork name keeps a single source of truth.
+// ASCII separator on purpose: this block is codepage 1200 and non-ASCII
+// bytes here depend on the encoding windres reads the file with.
+#ifndef VER_LEGALCOPYRIGHT_STR
+#define VER_LEGALCOPYRIGHT_STR		"aMule Team ( admin@amule.org ) - " AMULE_FORK_NAME
+#endif
+
 VS_VERSION_INFO VERSIONINFO
 	FILEVERSION	VERSION_MJR, VERSION_MIN, VERSION_UPDATE, VER_RELEASE
 	PRODUCTVERSION	VERSION_MJR, VERSION_MIN, VERSION_UPDATE, VER_RELEASE
@@ -57,7 +69,7 @@ BEGIN
 			VALUE	"OriginalFilename",	VER_ORIGINALFILENAME_STR
 			VALUE	"ProductName",		"aMule"
 			VALUE	"ProductVersion",	VER_PRODUCTVERSION_STR
-			VALUE	"LegalCopyright",	"aMule Team ( admin@amule.org )"
+			VALUE	"LegalCopyright",	VER_LEGALCOPYRIGHT_STR
 		END
 	END
 	BLOCK "VarFileInfo"

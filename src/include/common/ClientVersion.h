@@ -60,10 +60,41 @@
 	#define VERSION "3.0.0-dev"
 #endif
 
+// ---------------------------------------------------------------------
+// Fork identity
+//
+// This tree is a fork of upstream aMule, and carries two version numbers
+// that are deliberately kept apart:
+//
+//   * The upstream version -- VERSION, VERSION_MJR/MIN/UPDATE and
+//     MOD_VERSION_LONG. These go out on the wire: to servers via
+//     ServerConnect.cpp and to peers via BaseClient.cpp. They stay
+//     exactly as upstream shipped them, so on the eD2k network this
+//     build is indistinguishable from stock aMule.
+//   * The fork version -- AMULE_FORK_* below. Local identity only:
+//     About box, startup banner, tray menu. Never transmitted.
+//
+// So bump AMULE_FORK_VERSION for changes made in this fork, and leave
+// the upstream macros alone -- they track what this tree was forked
+// from, and misreporting them would misrepresent the client to the
+// network.
+// ---------------------------------------------------------------------
+#define	AMULE_FORK_NAME		"NeRvOuX Edition"
+#define	AMULE_FORK_VERSION	"0.1.0"
+#define	AMULE_FORK_TAG		" [" AMULE_FORK_NAME " " AMULE_FORK_VERSION "]"
+
+// MOD_VERSION_LONG is what BaseClient.cpp sends to other clients as the
+// eMule-lineage "mod version" tag -- it must stay upstream's string.
+// MOD_VERSION_DISPLAY is the same thing plus the fork tag, for the UI.
+// The two are spelled out per branch rather than composed, because the
+// non-GIT MOD_VERSION_LONG is parenthesised and `(...) "literal"` is not
+// string concatenation.
 #ifdef __GIT__
 	#define	MOD_VERSION_LONG		"aMule GIT"
+	#define	MOD_VERSION_DISPLAY		("aMule GIT" AMULE_FORK_TAG)
 #else
 	#define	MOD_VERSION_LONG		("aMule " VERSION)
+	#define	MOD_VERSION_DISPLAY		("aMule " VERSION AMULE_FORK_TAG)
 #endif
 
 #define	VERSION_MJR		3

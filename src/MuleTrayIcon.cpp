@@ -349,7 +349,8 @@ void CMuleTrayIcon::RebuildMenu()
 	GtkWidget* menu = gtk_menu_new();
 
 	// ---- Version banner ------------------------------------------
-	append_info(menu, MOD_VERSION_LONG);
+	// _DISPLAY, not _LONG: this is UI, so it carries the fork tag.
+	append_info(menu, MOD_VERSION_DISPLAY);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu),
 		gtk_separator_menu_item_new());
@@ -769,7 +770,8 @@ wxMenu* CMuleTrayIcon::CreatePopupMenu()
 	traymenu->SetTitle(_("aMule Tray Menu"));
 
 	// Build the Top string name
-	wxString label = MOD_VERSION_LONG;
+	// _DISPLAY, not _LONG: this is UI, so it carries the fork tag.
+	wxString label = MOD_VERSION_DISPLAY;
 	traymenu->Append(TRAY_MENU_INFO, label);
 	traymenu->AppendSeparator();
 	label = wxString(_("Speed limits:")) + " ";
