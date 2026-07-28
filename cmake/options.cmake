@@ -177,6 +177,8 @@ endif()
 
 if (NEED_LIB_MULEAPPGUI)
 	set (wx_NEED_GUI TRUE)
+	# CamuleDlg's main window is a wxAuiManager-managed dock layout.
+	set (wx_NEED_AUI TRUE)
 endif()
 
 if (NEED_LIB_MULESOCKET)
@@ -192,7 +194,7 @@ if (NOT (BUILD_DAEMON OR BUILD_MONOLITHIC OR BUILD_REMOTEGUI OR BUILD_WEBSERVER 
 	set (wx_NEED_NET FALSE)
 endif()
 
-if (wx_NEED_ADV OR wx_NEED_BASE OR wx_NEED_GUI OR wx_NEED_NET)
+if (wx_NEED_ADV OR wx_NEED_AUI OR wx_NEED_BASE OR wx_NEED_GUI OR wx_NEED_NET)
 	set (wx_NEEDED TRUE)
 
 	if (WIN32 AND NOT wx_NEED_BASE)

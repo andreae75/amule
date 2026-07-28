@@ -24,8 +24,8 @@
 # Thin wrapper over CMake's stock FindwxWidgets module that exposes
 # wxWidgets::{BASE,CORE,NET,ADV} as INTERFACE IMPORTED targets, letting
 # callers continue to write `target_link_libraries(tgt PRIVATE wxWidgets::CORE)`.
-# The component set is driven by wx_NEED_{BASE,GUI,NET,ADV} flags set up
-# in cmake/options.cmake.
+# The component set is driven by wx_NEED_{BASE,GUI,AUI,NET,ADV} flags set
+# up in cmake/options.cmake.
 #
 # wx 3.1.2+ merged the ADV component into CORE, so `adv` is not requested
 # from find_package; wxWidgets::ADV is still created when asked for so that
@@ -43,6 +43,14 @@ endif()
 if (wx_NEED_GUI)
 	list (APPEND _amule_wx_components core)
 	list (APPEND _amule_wx_targets CORE)
+endif()
+
+# AUI (Advanced User Interface): the dockable/floating pane manager the
+# main window's layout is built on. Ships with wxWidgets core since 2.8,
+# but as a separate library, so it has to be requested explicitly.
+if (wx_NEED_AUI)
+	list (APPEND _amule_wx_components aui)
+	list (APPEND _amule_wx_targets AUI)
 endif()
 
 if (wx_NEED_NET)

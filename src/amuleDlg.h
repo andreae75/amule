@@ -28,6 +28,7 @@
 
 
 #include <wx/archive.h>
+#include <wx/aui/framemanager.h>	// Needed for wxAuiManager (dock layout)
 #include <wx/filename.h>
 #include <wx/frame.h>			// Needed for wxFrame
 #include <wx/imaglist.h>
@@ -62,6 +63,13 @@ struct PageType {
 #define MP_CONNECT	4002
 #define MP_DISCONNECT	4003
 #define MP_EXIT		4004
+
+// View menu: one contiguous id per dockable view (indexed by
+// CamuleDlg::DialogType), plus the layout reset. Kept in the same
+// private 4xxx block as the tray menu ids above.
+#define MP_VIEW_PANE_FIRST	4020
+#define MP_VIEW_PANE_LAST	4029
+#define MP_VIEW_RESET_LAYOUT	4030
 
 
 #define DEFAULT_SIZE_X  800
@@ -121,7 +129,7 @@ public:
 	void ShowTransferRate();
 
 	bool StatisticsWindowActive()
-		{ return (m_activewnd == static_cast<wxWindow*>(m_statisticswnd)); }
+		{ return IsDialogVisible(DT_STATS_WND); }
 
 	/* Returns the active dialog. Needed to check what to redraw. */
 	enum DialogType {
@@ -135,17 +143,29 @@ public:
 	};
 	DialogType GetActiveDialog()
 		{ return m_nActiveDialog; }
+
+	/**
+	 * Brings a view to the front: shows its pane if it was closed, gives
+	 * it focus, and records it as the active one.
+	 *
+	 * The @a dlg argument is redundant now that panes are looked up by
+	 * type, but the signature is kept so the toolbar handler and
+	 * CChatWnd don't have to change.
+	 */
 	void SetActiveDialog(DialogType type, wxWindow* dlg);
 
 	/**
 	 * Helper function for deciding if a certain dlg is visible.
 	 *
+	 * Under the dock layout several views can be on screen at once, so
+	 * this asks the pane rather than comparing against a single "active"
+	 * window. Callers use it to skip expensive redraws, and a view
+	 * that is docked next to the active one genuinely does need
+	 * repainting.
+	 *
 	 * @return True if the dialog is visible to the user, false otherwise.
 	 */
-	bool IsDialogVisible( DialogType dlg )
-	{
-		return m_nActiveDialog == dlg && m_is_safe_state /* && !IsIconized() */;
-	}
+	bool IsDialogVisible( DialogType dlg );
 
 	void ShowED2KLinksHandler( bool show );
 
@@ -177,6 +197,9 @@ public:
 	void IP2CountryDownloadFinished(uint32 result);
 	void EnableIP2Country();
 
+	//! Last view brought to the front. Only meaningful as "what the user
+	//! looked at most recently" -- use IsDialogVisible() to ask whether
+	//! something is actually on screen.
 	wxWindow*		m_activewnd;
 	CTransferWnd*		m_transferwnd;
 	CServerWnd*		m_serverwnd;
@@ -195,6 +218,8 @@ public:
 
 protected:
 	void OnToolBarButton(wxCommandEvent& ev);
+	void OnViewPane(wxCommandEvent& ev);
+	void OnResetLayout(wxCommandEvent& ev);
 	void OnAboutButton(wxCommandEvent& ev);
 	void OnPrefButton(wxCommandEvent& ev);
 	void OnImportButton(wxCommandEvent& ev);
@@ -206,6 +231,34 @@ protected:
 	void OnExit(wxCommandEvent& evt);
 
 private:
+	// ---- Dock layout ------------------------------------------------
+	//
+	// The seven views used to be siblings swapped in and out of a sizer,
+	// one visible at a time. They are now panes of a wxAuiManager, so
+	// any combination can be on screen, docked or floating.
+
+	//! Panel the manager owns. It sits inside the old contentSizer slot
+	//! so the eD2k link bar and the status bar below it stay ordinary
+	//! sizer content -- a wxAuiManager claims its window's whole client
+	//! area and would fight them for it.
+	wxPanel* m_auiHost;
+	wxAuiManager m_auiMgr;
+
+	//! Stable, untranslated pane id. This is the key LoadPerspective()
+	//! matches on, so it must never be run through _(): a language
+	//! change would otherwise orphan every saved pane.
+	static const wxString PaneName(DialogType type);
+	//! Translated pane caption, for the title bar and the View menu.
+	static const wxString PaneCaption(DialogType type);
+	//! The window behind a view, or NULL for types without a pane
+	//! (DT_KAD_WND lives inside the networks notebook, not in a pane).
+	wxWindow* PaneWindow(DialogType type) const;
+
+	void CreateAuiPanes();
+	void ApplyDefaultPerspective();
+	void CreateViewMenu();
+	void SyncViewMenu();
+
 	//! Specifies if the prefs-dialog was shown before minimizing.
 	bool m_prefsVisible;
 	wxToolBar *m_wndToolbar;

@@ -135,6 +135,10 @@ wxBEGIN_EVENT_TABLE(CamuleDlg, wxFrame)
 
 	EVT_MENU(wxID_EXIT, CamuleDlg::OnExit)
 
+	// View menu: pane visibility toggles + layout reset.
+	EVT_MENU_RANGE(MP_VIEW_PANE_FIRST, MP_VIEW_PANE_LAST, CamuleDlg::OnViewPane)
+	EVT_MENU(MP_VIEW_RESET_LAYOUT, CamuleDlg::OnResetLayout)
+
 wxEND_EVENT_TABLE()
 
 #ifndef wxCLOSE_BOX
@@ -164,6 +168,7 @@ m_prefsDialog(NULL),
 m_srv_split_pos(0),
 m_imagelist(16,16),
 m_tblist(32,32),
+m_auiHost(NULL),
 m_prefsVisible(false),
 m_wndToolbar(NULL),
 m_wndTaskbarNotifier(NULL),
@@ -240,7 +245,16 @@ m_clientSkinNames(CLIENT_SKIN_SIZE)
 	muleDlg(p_cnt, false, true);
 	SetSizer(s_main, true);
 
-	m_serverwnd = new CServerWnd(p_cnt, m_srv_split_pos);
+	// Host panel for the dock layout. It takes over the slot the single
+	// active view used to occupy, so the eD2k link bar and status bar
+	// that sit below it in s_dlgcnt are untouched -- a wxAuiManager owns
+	// the whole client area of the window it manages, and would
+	// otherwise fight those for space.
+	m_auiHost = new wxPanel(p_cnt, -1);
+	contentSizer->Add(m_auiHost, wxSizerFlags(1).Expand());
+	m_auiMgr.SetManagedWindow(m_auiHost);
+
+	m_serverwnd = new CServerWnd(m_auiHost, m_srv_split_pos);
 	AddLogLineN("");
 	AddLogLineN(wxString(" - ") +
 		wxString(CFormat(_("This is aMule %s based on eMule.")) % GetMuleVersion()));
@@ -256,19 +270,18 @@ m_clientSkinNames(CLIENT_SKIN_SIZE)
 #else
 	m_GeoIPavailable = false;
 #endif
-	m_searchwnd = new CSearchDlg(p_cnt);
-	m_transferwnd = new CTransferWnd(p_cnt);
-	m_sharedfileswnd = new CSharedFilesWnd(p_cnt);
-	m_statisticswnd = new CStatisticsDlg(p_cnt, theApp->m_statistics);
-	m_chatwnd = new CChatWnd(p_cnt);
+	m_searchwnd = new CSearchDlg(m_auiHost);
+	m_transferwnd = new CTransferWnd(m_auiHost);
+	m_sharedfileswnd = new CSharedFilesWnd(m_auiHost);
+	m_statisticswnd = new CStatisticsDlg(m_auiHost, theApp->m_statistics);
+	m_chatwnd = new CChatWnd(m_auiHost);
+	// Not a pane: the Kad view is a page of the networks notebook that
+	// muleDlg() builds inside CServerWnd, not a sibling view.
 	m_kademliawnd = CastChild("kadWnd", CKadDlg);
 
-	m_serverwnd->Show(false);
-	m_searchwnd->Show(false);
-	m_transferwnd->Show(false);
-	m_sharedfileswnd->Show(false);
-	m_statisticswnd->Show(false);
-	m_chatwnd->Show(false);
+	// No Show(false) juggling any more -- pane visibility is the
+	// manager's business from here on.
+	CreateAuiPanes();
 
 	// Create the GUI timer
 	gui_timer=new wxTimer(this,ID_GUI_TIMER_EVENT);
@@ -278,6 +291,7 @@ m_clientSkinNames(CLIENT_SKIN_SIZE)
 	}
 
 	// Set transfers as active window
+	CreateViewMenu();
 	Create_Toolbar(thePrefs::VerticalToolbar());
 	SetActiveDialog(DT_TRANSFER_WND, m_transferwnd);
 	m_wndToolbar->ToggleTool(ID_BUTTONDOWNLOADS, true );
@@ -380,6 +394,210 @@ void CamuleDlg::ToogleED2KLinksHandler()
 	ShowED2KLinksHandler(!s_dlgcnt->IsShown(s_fed2klh));
 }
 
+// Untranslated on purpose -- see the declaration in amuleDlg.h.
+const wxString CamuleDlg::PaneName(DialogType type)
+{
+	switch (type) {
+		case DT_TRANSFER_WND:	return wxT("transfers");
+		case DT_NETWORKS_WND:	return wxT("networks");
+		case DT_SEARCH_WND:	return wxT("search");
+		case DT_SHARED_WND:	return wxT("shared");
+		case DT_CHAT_WND:	return wxT("messages");
+		case DT_STATS_WND:	return wxT("statistics");
+		case DT_KAD_WND:	break;	// no pane
+	}
+	return wxEmptyString;
+}
+
+
+const wxString CamuleDlg::PaneCaption(DialogType type)
+{
+	switch (type) {
+		case DT_TRANSFER_WND:	return _("Transfers");
+		case DT_NETWORKS_WND:	return _("Networks");
+		case DT_SEARCH_WND:	return _("Searches");
+		case DT_SHARED_WND:	return _("Shared Files");
+		case DT_CHAT_WND:	return _("Messages");
+		case DT_STATS_WND:	return _("Statistics");
+		case DT_KAD_WND:	break;	// no pane
+	}
+	return wxEmptyString;
+}
+
+
+wxWindow* CamuleDlg::PaneWindow(DialogType type) const
+{
+	switch (type) {
+		case DT_TRANSFER_WND:	return m_transferwnd;
+		case DT_NETWORKS_WND:	return m_serverwnd;
+		case DT_SEARCH_WND:	return m_searchwnd;
+		case DT_SHARED_WND:	return m_sharedfileswnd;
+		case DT_CHAT_WND:	return m_chatwnd;
+		case DT_STATS_WND:	return m_statisticswnd;
+		case DT_KAD_WND:	break;	// lives in the networks notebook
+	}
+	return NULL;
+}
+
+
+void CamuleDlg::CreateAuiPanes()
+{
+	// Transfers is the centre pane: it is what the app opens on and the
+	// one view that always wants the most room. wxAUI requires exactly
+	// one centre pane, and it cannot be closed -- which conveniently
+	// guarantees the layout can never end up completely empty.
+	m_auiMgr.AddPane(m_transferwnd,
+		wxAuiPaneInfo()
+			.Name(PaneName(DT_TRANSFER_WND))
+			.Caption(PaneCaption(DT_TRANSFER_WND))
+			.CenterPane()
+			.Show());
+
+	// Everything else is dockable, floatable and closable. They start
+	// hidden so first launch looks exactly like the old single-view
+	// shell -- the toolbar reveals one at a time, as before. The gain is
+	// that once revealed a pane can be dragged beside Transfers, or torn
+	// off onto a second monitor, and it stays there.
+	struct { DialogType type; int dir; } layout[] = {
+		{ DT_NETWORKS_WND, wxAUI_DOCK_LEFT   },
+		{ DT_SEARCH_WND,   wxAUI_DOCK_TOP    },
+		{ DT_SHARED_WND,   wxAUI_DOCK_BOTTOM },
+		{ DT_CHAT_WND,     wxAUI_DOCK_RIGHT  },
+		{ DT_STATS_WND,    wxAUI_DOCK_RIGHT  },
+	};
+
+	// Generous default extents: these views are all wide tables, and a
+	// pane that first appears 100px tall reads as broken.
+	const wxSize best(DEFAULT_SIZE_X * 2 / 3, DEFAULT_SIZE_Y * 2 / 3);
+
+	for (size_t i = 0; i < WXSIZEOF(layout); ++i) {
+		wxWindow* win = PaneWindow(layout[i].type);
+		if (!win) {
+			continue;
+		}
+		m_auiMgr.AddPane(win,
+			wxAuiPaneInfo()
+				.Name(PaneName(layout[i].type))
+				.Caption(PaneCaption(layout[i].type))
+				.Direction(layout[i].dir)
+				.BestSize(best)
+				.MinSize(160, 120)
+				.Floatable(true)
+				.Dockable(true)
+				.MaximizeButton(true)
+				.Hide());
+	}
+
+	m_auiMgr.Update();
+}
+
+
+// A closed pane has to be reachable again, and a layout dragged into a
+// corner has to be recoverable -- otherwise "close" is a trap. aMule had
+// no menu bar at all, so this adds a minimal one carrying just those two
+// affordances.
+void CamuleDlg::CreateViewMenu()
+{
+	wxMenu* viewMenu = new wxMenu;
+
+	for (int t = DT_TRANSFER_WND; t <= DT_STATS_WND; ++t) {
+		const DialogType type = static_cast<DialogType>(t);
+		if (!PaneWindow(type)) {
+			continue;
+		}
+		viewMenu->AppendCheckItem(MP_VIEW_PANE_FIRST + t, PaneCaption(type));
+	}
+
+	viewMenu->AppendSeparator();
+	viewMenu->Append(MP_VIEW_RESET_LAYOUT, _("&Reset Layout"));
+
+	wxMenuBar* bar = new wxMenuBar;
+	bar->Append(viewMenu, _("&View"));
+	SetMenuBar(bar);
+
+	SyncViewMenu();
+}
+
+
+void CamuleDlg::SyncViewMenu()
+{
+	wxMenuBar* bar = GetMenuBar();
+	if (!bar) {
+		return;
+	}
+
+	for (int t = DT_TRANSFER_WND; t <= DT_STATS_WND; ++t) {
+		const DialogType type = static_cast<DialogType>(t);
+		wxWindow* win = PaneWindow(type);
+		if (!win) {
+			continue;
+		}
+		wxMenuItem* item = bar->FindItem(MP_VIEW_PANE_FIRST + t);
+		if (!item) {
+			continue;
+		}
+		wxAuiPaneInfo& pane = m_auiMgr.GetPane(win);
+		item->Check(pane.IsOk() && pane.IsShown());
+		// The centre pane cannot be closed, so its entry is a permanent
+		// tick rather than a control that silently does nothing.
+		if (type == DT_TRANSFER_WND) {
+			item->Enable(false);
+		}
+	}
+}
+
+
+void CamuleDlg::OnViewPane(wxCommandEvent& ev)
+{
+	const int t = ev.GetId() - MP_VIEW_PANE_FIRST;
+	if (t < DT_TRANSFER_WND || t > DT_STATS_WND) {
+		return;
+	}
+
+	wxWindow* win = PaneWindow(static_cast<DialogType>(t));
+	if (!win) {
+		return;
+	}
+
+	wxAuiPaneInfo& pane = m_auiMgr.GetPane(win);
+	if (!pane.IsOk()) {
+		return;
+	}
+
+	pane.Show(ev.IsChecked());
+	m_auiMgr.Update();
+	SyncViewMenu();
+}
+
+
+void CamuleDlg::OnResetLayout(wxCommandEvent& WXUNUSED(ev))
+{
+	ApplyDefaultPerspective();
+}
+
+
+void CamuleDlg::ApplyDefaultPerspective()
+{
+	for (int t = DT_TRANSFER_WND; t <= DT_STATS_WND; ++t) {
+		const DialogType type = static_cast<DialogType>(t);
+		wxWindow* win = PaneWindow(type);
+		if (!win) {
+			continue;
+		}
+		wxAuiPaneInfo& pane = m_auiMgr.GetPane(win);
+		if (!pane.IsOk()) {
+			continue;
+		}
+		// Dock() also clears the floating state, so a pane the user
+		// tore off comes home rather than staying loose.
+		pane.Dock();
+		pane.Show(type == DT_TRANSFER_WND);
+	}
+	m_auiMgr.Update();
+	SyncViewMenu();
+}
+
+
 void CamuleDlg::SetActiveDialog(DialogType type, wxWindow* dlg)
 {
 	m_nActiveDialog = type;
@@ -390,15 +608,25 @@ void CamuleDlg::SetActiveDialog(DialogType type, wxWindow* dlg)
 		}
 	}
 
-	if ( m_activewnd ) {
-		m_activewnd->Show(false);
-		contentSizer->Detach(m_activewnd);
+	if (!dlg) {
+		dlg = PaneWindow(type);
+	}
+	if (!dlg) {
+		return;
 	}
 
-	contentSizer->Add(dlg, wxSizerFlags(1).Expand());
-	dlg->Show(true);
-	m_activewnd=dlg;
-	s_dlgcnt->Layout();
+	wxAuiPaneInfo& pane = m_auiMgr.GetPane(dlg);
+	if (pane.IsOk()) {
+		// Reveal rather than swap: any other pane the user has docked
+		// stays exactly where they put it.
+		if (!pane.IsShown()) {
+			pane.Show();
+			m_auiMgr.Update();
+			SyncViewMenu();
+		}
+	}
+
+	m_activewnd = dlg;
 
 	// Since we might be suspending redrawing while hiding the dialog
 	// we have to refresh it once it is visible again
@@ -409,6 +637,24 @@ void CamuleDlg::SetActiveDialog(DialogType type, wxWindow* dlg)
 		// set up splitter now that window sizes are defined
 		m_sharedfileswnd->Prepare();
 	}
+}
+
+
+bool CamuleDlg::IsDialogVisible( DialogType dlg )
+{
+	if (!m_is_safe_state) {
+		return false;
+	}
+
+	wxWindow* win = PaneWindow(dlg);
+	if (!win) {
+		// DT_KAD_WND and friends have no pane; fall back to the old
+		// "is it the active one" test.
+		return m_nActiveDialog == dlg;
+	}
+
+	wxAuiPaneInfo& pane = m_auiMgr.GetPane(win);
+	return pane.IsOk() && pane.IsShown();
 }
 
 
@@ -565,6 +811,13 @@ void CamuleDlg::OnImportButton(wxCommandEvent& WXUNUSED(ev))
 
 CamuleDlg::~CamuleDlg()
 {
+	// Must happen while the managed panel and its panes are still
+	// alive: wxAuiManager keeps raw pointers to them and detaches on
+	// UnInit(). Leaving it to ~wxAuiManager would run after wxFrame has
+	// already destroyed the children, i.e. after those pointers went
+	// stale.
+	m_auiMgr.UnInit();
+
 	theApp->amuledlg = NULL;
 
 #ifdef ENABLE_IP2COUNTRY
@@ -1060,6 +1313,20 @@ bool CamuleDlg::LoadGUIPrefs(bool override_pos, bool override_size)
 		Maximize();
 	}
 
+	// Dock layout. The key carries a version suffix: a perspective
+	// string records panes by name, so once a pane is added, dropped or
+	// renamed an older string would restore a layout missing the new
+	// panes with no way to tell. Bumping the suffix retires every stale
+	// string at once and falls back to the default layout.
+	wxString perspective = config->Read(section + "AuiPerspectiveV1", wxEmptyString);
+	if (!perspective.IsEmpty()) {
+		m_auiMgr.LoadPerspective(perspective, false);
+	}
+	// Update() even without a saved perspective: it commits the default
+	// panes built in CreateAuiPanes().
+	m_auiMgr.Update();
+	SyncViewMenu();
+
 	return true;
 }
 
@@ -1096,6 +1363,10 @@ bool CamuleDlg::SaveGUIPrefs()
 
 	// Saving sash position of splitter in server window
 	config->Write(section+"SRV_SPLITTER_POS", (long) m_srv_split_pos);
+
+	// Dock layout -- see the matching read in LoadGUIPrefs for why the
+	// key is versioned.
+	config->Write(section+"AuiPerspectiveV1", m_auiMgr.SavePerspective());
 
 	config->Flush(true);
 
@@ -1223,7 +1494,10 @@ void CamuleDlg::OnGUITimer(wxTimerEvent& WXUNUSED(evt))
 	if (msCur-msPrev5 > 5000) {  // every 5 seconds
 		msPrev5 = msCur;
 		ShowTransferRate();
-		if (thePrefs::ShowCatTabInfos() && theApp->amuledlg->m_activewnd == theApp->amuledlg->m_transferwnd) {
+		// Ask the pane, not the "active" window: under the dock layout
+		// Transfers can be on screen while the user works in another
+		// pane, and its category tabs still need refreshing.
+		if (thePrefs::ShowCatTabInfos() && IsDialogVisible(DT_TRANSFER_WND)) {
 			m_transferwnd->UpdateCatTabTitles();
 		}
 		if (thePrefs::AutoSortDownload()) {

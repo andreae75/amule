@@ -723,6 +723,11 @@ if (NEED_LIB_MULEAPPGUI)
 
 	target_link_libraries (muleappgui
 		PRIVATE wxWidgets::CORE
+		# Dock/float pane manager behind CamuleDlg's main layout.
+		# PUBLIC: amule and amulegui compile GUI_SOURCES (amuleDlg.cpp
+		# among them) directly into themselves, so they need the AUI
+		# link too rather than just inheriting headers.
+		PUBLIC wxWidgets::AUI
 	)
 
 	# generate_icon_data produces ${BINARY_DIR}/src/icons/icon_data.c,
