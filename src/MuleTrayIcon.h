@@ -47,7 +47,10 @@ class wxString;
 enum {
 	TRAY_ICON_DISCONNECTED,
 	TRAY_ICON_LOWID,
-	TRAY_ICON_HIGHID
+	TRAY_ICON_HIGHID,
+
+	//! Number of states above; sizes the per-state artwork cache.
+	TRAY_ICON_MAX
 };
 
 // Backend selection:
@@ -70,7 +73,7 @@ typedef struct _GtkWidget GtkWidget;
 #else
 #include <wx/taskbar.h>
 #include <wx/icon.h>
-#include <wx/dcmemory.h>
+#include <wx/image.h>	// Needed for the per-state wxImage cache
 class wxMenu;
 #endif
 
@@ -141,15 +144,24 @@ private:
 	void ShowHide(wxCommandEvent&);
 	void Close(wxCommandEvent&);
 
+	//! Base artwork for one tray state: red chroma key resolved to a
+	//! real alpha channel and rescaled to the size the platform's
+	//! notification area actually asks for. Built once per state and
+	//! then copied per repaint -- see GetTrayBaseImage().
+	const wxImage& GetTrayBaseImage(int Icon);
+
 	int Old_Icon;
 	int Old_SpeedSize;
 
-	int Disconnected_Icon_size;
-	int LowId_Icon_size;
-	int HighId_Icon_size;
+	//! Edge length of the prepared artwork, i.e. what the tray wants
+	//! rather than what the source PNG happens to be. Drives both the
+	//! rescale and the speed bar geometry.
+	int m_iconSize;
+
+	//! Indexed by TRAY_ICON_*; empty until first use.
+	wxImage m_baseImages[TRAY_ICON_MAX];
 
 	wxIcon CurrentIcon;
-	wxMemoryDC IconWithSpeed;
 	wxString CurrentTip;
 
 	wxDECLARE_EVENT_TABLE();

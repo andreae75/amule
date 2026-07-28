@@ -522,6 +522,8 @@ void CMuleTrayIcon::RebuildMenu()
 // ---------------------------------------------------------------------
 
 #include <wx/artprov.h>           // Needed for wxArtProvider::GetIcon
+#include <wx/image.h>             // Needed for wxImage (alpha-aware tray artwork)
+#include <wx/settings.h>          // Needed for wxSystemSettings::GetMetric
 
 #include <wx/menu.h>
 
@@ -636,10 +638,109 @@ CMuleTrayIcon::CMuleTrayIcon()
 	Old_Icon = -1;
 	Old_SpeedSize = 0xFFFF; // must be > any possible one.
 
-	// Create the background icons (speed improvement)
-	HighId_Icon_size = wxArtProvider::GetIcon("amule:tray_high").GetHeight();
-	LowId_Icon_size = wxArtProvider::GetIcon("amule:tray_low").GetHeight();
-	Disconnected_Icon_size = wxArtProvider::GetIcon("amule:tray_disconnected").GetHeight();
+	// Ask the platform how big a notification-area icon actually is
+	// instead of shipping the source PNG's size. The tray artwork is
+	// 22x22 (a GNOME-era convention); Windows wants SM_CXSMICON, which
+	// is 16 at 100% DPI and 20 / 24 / 32 as the scaling goes up.
+	// Handing the shell a 22px bitmap made it resample by a non-integer
+	// factor on every single machine -- the mush this replaces.
+	m_iconSize = wxSystemSettings::GetMetric(wxSYS_SMALLICON_X);
+	if (m_iconSize <= 0) {
+		// Not implemented on this platform; keep the artwork as-is.
+		m_iconSize = wxArtProvider::GetBitmap("amule:tray_high").GetHeight();
+	}
+}
+
+
+// The tray PNGs have no alpha channel: they are palette images where
+// pure red (0xFF0000) means "transparent", and the old code turned that
+// into a wxMask -- i.e. 1-bit transparency, every pixel fully opaque or
+// fully gone. Combined with the shell's own rescale that produced hard,
+// aliased edges.
+//
+// Resolving the key to a real 8-bit alpha channel *before* rescaling
+// lets the resampler interpolate coverage, so the edges come out
+// anti-aliased against whatever the taskbar background happens to be.
+//
+// The subtle part is the colour under the transparent pixels. It is
+// pure red, and a high-quality rescale interpolates RGB and alpha
+// independently -- so red bleeds into the semi-transparent edge pixels
+// and leaves a magenta fringe. Bleeding the neighbouring opaque colour
+// outwards first (one dilation pass) gives the resampler something
+// harmless to blend, which is the standard fix.
+const wxImage& CMuleTrayIcon::GetTrayBaseImage(int Icon)
+{
+	wxASSERT(Icon >= 0 && Icon < TRAY_ICON_MAX);
+
+	if (m_baseImages[Icon].IsOk()) {
+		return m_baseImages[Icon];
+	}
+
+	const wxChar* artId = NULL;
+	switch (Icon) {
+		case TRAY_ICON_HIGHID:		artId = wxT("amule:tray_high");		break;
+		case TRAY_ICON_LOWID:		artId = wxT("amule:tray_low");		break;
+		case TRAY_ICON_DISCONNECTED:	artId = wxT("amule:tray_disconnected");	break;
+		default:			wxFAIL;					return m_baseImages[0];
+	}
+
+	wxImage img = wxArtProvider::GetBitmap(artId).ConvertToImage();
+	if (!img.IsOk()) {
+		return m_baseImages[Icon];
+	}
+
+	const int w = img.GetWidth();
+	const int h = img.GetHeight();
+
+	// Pass 1: key -> alpha. Match the key generously (the palette
+	// stores it as exactly 255,0,0, but a tolerance costs nothing and
+	// survives a re-export through a lossy tool).
+	img.SetAlpha();
+	unsigned char* alpha = img.GetAlpha();
+	unsigned char* rgb = img.GetData();
+
+	for (int i = 0; i < w * h; ++i) {
+		const unsigned char r = rgb[i*3], g = rgb[i*3+1], b = rgb[i*3+2];
+		alpha[i] = (r > 240 && g < 20 && b < 20) ? 0 : wxALPHA_OPAQUE;
+	}
+
+	// Pass 2: bleed opaque colour into the transparent border ring, so
+	// the rescale has no red left to smear into the edges.
+	for (int y = 0; y < h; ++y) {
+		for (int x = 0; x < w; ++x) {
+			const int i = y * w + x;
+			if (alpha[i] != 0) {
+				continue;
+			}
+			int sr = 0, sg = 0, sb = 0, n = 0;
+			for (int dy = -1; dy <= 1; ++dy) {
+				for (int dx = -1; dx <= 1; ++dx) {
+					const int nx = x + dx, ny = y + dy;
+					if (nx < 0 || ny < 0 || nx >= w || ny >= h) {
+						continue;
+					}
+					const int j = ny * w + nx;
+					if (alpha[j] == 0) {
+						continue;
+					}
+					sr += rgb[j*3]; sg += rgb[j*3+1]; sb += rgb[j*3+2];
+					++n;
+				}
+			}
+			if (n) {
+				rgb[i*3]   = (unsigned char)(sr / n);
+				rgb[i*3+1] = (unsigned char)(sg / n);
+				rgb[i*3+2] = (unsigned char)(sb / n);
+			}
+		}
+	}
+
+	if (m_iconSize > 0 && m_iconSize != h) {
+		img.Rescale(m_iconSize, m_iconSize, wxIMAGE_QUALITY_HIGH);
+	}
+
+	m_baseImages[Icon] = img;
+	return m_baseImages[Icon];
 }
 
 CMuleTrayIcon::~CMuleTrayIcon()
@@ -653,84 +754,62 @@ CMuleTrayIcon::~CMuleTrayIcon()
 
 void CMuleTrayIcon::SetTrayIcon(int Icon, uint32 percent)
 {
-	int Bar_ySize = 0;
-
-	switch (Icon) {
-		case TRAY_ICON_HIGHID:
-			// Most likely case, test first
-			Bar_ySize = HighId_Icon_size;
-			break;
-		case TRAY_ICON_LOWID:
-			Bar_ySize = LowId_Icon_size;
-			break;
-		case TRAY_ICON_DISCONNECTED:
-			Bar_ySize = Disconnected_Icon_size;
-			break;
-		default:
-			wxFAIL;
+	const wxImage& base = GetTrayBaseImage(Icon);
+	if (!base.IsOk()) {
+		return;
 	}
+
+	const int Bar_ySize = base.GetHeight();
 
 	// Lookup this values for speed improvement: don't draw if not needed
 	int NewSize = (Bar_ySize * percent) / 100;
 
-	if ((Old_Icon != Icon) || (Old_SpeedSize != NewSize)) {
+	if ((Old_Icon == Icon) && (Old_SpeedSize == NewSize)) {
+		return;
+	}
 
-		if ((Old_SpeedSize > NewSize) || (Old_Icon != Icon)) {
-			// We have to rebuild the icon, because bar is lower now.
-			switch (Icon) {
-				case TRAY_ICON_HIGHID:
-					// Most likely case, test first
-					CurrentIcon = wxArtProvider::GetIcon("amule:tray_high");
-					break;
-				case TRAY_ICON_LOWID:
-					CurrentIcon = wxArtProvider::GetIcon("amule:tray_low");
-					break;
-				case TRAY_ICON_DISCONNECTED:
-					CurrentIcon = wxArtProvider::GetIcon("amule:tray_disconnected");
-					break;
-				default:
-					wxFAIL;
+	Old_Icon = Icon;
+	Old_SpeedSize = NewSize;
+
+	// Always repaint from the pristine base image. The old code mutated
+	// the icon in place and only rebuilt it when the bar got shorter,
+	// which is why it needed that extra branch; copying a 16x16 image is
+	// far cheaper than the redraw this already gates on.
+	wxImage img = base.Copy();
+
+	// Speed bar: a vertical gauge inset from the right edge, growing
+	// upwards from the bottom. Geometry is derived from the icon size
+	// rather than hardcoded to the source artwork's 22px, so it still
+	// lands correctly once the image has been rescaled for the tray.
+	const int Bar_xSize = wxMax(1, Bar_ySize / 8);
+	const int Bar_xPos = wxMax(0, Bar_ySize - Bar_xSize - 1);
+
+	if (NewSize > 0) {
+		const wxColour barColour = CStatisticsDlg::getColors(11);
+		const int x0 = Bar_xPos;
+		const int x1 = wxMin(base.GetWidth(), Bar_xPos + Bar_xSize);
+		const int y0 = wxMax(0, Bar_ySize - NewSize);
+
+		// Painted straight into the wxImage rather than through a
+		// wxMemoryDC: on MSW, GDI drawing onto a 32-bit bitmap silently
+		// drops the alpha channel, which would undo the whole point of
+		// this function. A solid rectangle needs no DC anyway.
+		unsigned char* rgb = img.GetData();
+		unsigned char* alpha = img.GetAlpha();
+		for (int y = y0; y < Bar_ySize; ++y) {
+			for (int x = x0; x < x1; ++x) {
+				const int i = y * img.GetWidth() + x;
+				rgb[i*3]   = barColour.Red();
+				rgb[i*3+1] = barColour.Green();
+				rgb[i*3+2] = barColour.Blue();
+				alpha[i]   = wxALPHA_OPAQUE;
 			}
 		}
-
-		Old_Icon = Icon;
-		Old_SpeedSize = NewSize;
-
-		// Do whatever to the icon before drawing it (percent)
-
-		wxBitmap TempBMP;
-		TempBMP.CopyFromIcon(CurrentIcon);
-
-		TempBMP.SetMask(NULL);
-
-		IconWithSpeed.SelectObject(TempBMP);
-
-
-		// Speed bar is: centered, taking 80% of the icon height, and
-		// right-justified taking a 10% of the icon width.
-
-		// X
-		int Bar_xSize = 4;
-		int Bar_xPos = CurrentIcon.GetWidth() - 5;
-
-		IconWithSpeed.SetBrush(*(wxTheBrushList->FindOrCreateBrush(CStatisticsDlg::getColors(11))));
-		IconWithSpeed.SetPen(*wxTRANSPARENT_PEN);
-
-		IconWithSpeed.DrawRectangle(Bar_xPos + 1, Bar_ySize - NewSize, Bar_xSize -2 , NewSize);
-
-		// Unselect the icon.
-		IconWithSpeed.SelectObject(wxNullBitmap);
-
-		// Do transparency
-
-		// Set a new mask with transparency set to red.
-		wxMask* new_mask = new wxMask(TempBMP, wxColour(0xFF, 0x00, 0x00));
-
-		TempBMP.SetMask(new_mask);
-		CurrentIcon.CopyFromBitmap(TempBMP);
-
-		UpdateTray();
 	}
+
+	CurrentIcon.CopyFromBitmap(wxBitmap(img));
+
+	UpdateTray();
 }
 
 void CMuleTrayIcon::SetTrayToolTip(const wxString& Tip)
