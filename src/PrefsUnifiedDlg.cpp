@@ -30,6 +30,7 @@
 #include <common/Macros.h>		// Needed for itemsof()
 
 #include <wx/colordlg.h>
+#include <wx/display.h>		// Needed for wxDisplay (clamping the dialog to the screen)
 #include <wx/progdlg.h>
 #include <wx/stdpaths.h>
 #include <wx/tooltip.h>
@@ -180,6 +181,108 @@ struct PrefsPage
 };
 
 
+namespace {
+
+//! Vertical gap inserted between the rows of a preference page, and the
+//! padding kept between a page and the edges of its container. Both are
+//! passed through wxWindow::FromDIP() before use, so they stay the same
+//! apparent size on a scaled display.
+const int PREFS_ROW_GAP_DIP = 6;
+const int PREFS_PAGE_PAD_DIP = 8;
+
+//! The size the dialog opens at, before it is clamped to the screen and
+//! raised to whatever the widest page actually needs. Chosen against a
+//! 1280x768 display -- the smallest we design for -- leaving room for a
+//! task bar and the window's own title bar.
+const int PREFS_PREFERRED_W_DIP = 1000;
+const int PREFS_PREFERRED_H_DIP = 660;
+
+
+/**
+ * Inserts a uniform vertical gap between the rows of every vertical sizer
+ * in a preference page, depth first.
+ *
+ * The pages are built by the hand-maintained wxDesigner functions in
+ * muuli_wdr.cpp, where nearly every Add() goes in with no border at all:
+ * checkboxes end up stacked edge to edge against each other and against
+ * the panel. Doing the spacing here, once, keeps those fifteen layout
+ * functions -- in a file we share with upstream -- out of the diff.
+ *
+ * Gaps are inserted rather than existing borders widened, because a
+ * wxSizerItem carries a single border value for all four of its sides:
+ * growing it to open up the rows would also flatten deliberate horizontal
+ * indentation, such as the radio buttons sitting at Border(wxLEFT, 20)
+ * under "Show transfer rates on title".
+ */
+void RelaxSizerSpacing(wxSizer* sizer, int gap)
+{
+	if (sizer == NULL) {
+		return;
+	}
+
+	wxSizerItemList& items = sizer->GetChildren();
+
+	// Depth first. Recursing before inserting anything means the indices
+	// used below still refer to the original rows.
+	for (wxSizerItemList::const_iterator it = items.begin(); it != items.end(); ++it) {
+		RelaxSizerSpacing((*it)->GetSizer(), gap);
+	}
+
+	// A grid carries its own row spacing, and wxFlexGridSizer -- which is
+	// what the label/control rows are built from -- derives from it.
+	// Widening that is both simpler and more correct than threading
+	// spacers through a fixed column count.
+	if (wxGridSizer* grid = wxDynamicCast(sizer, wxGridSizer)) {
+		if (grid->GetVGap() < gap) {
+			grid->SetVGap(gap);
+		}
+		return;
+	}
+
+	// wxStaticBoxSizer derives from wxBoxSizer, so the group boxes are
+	// handled here too.
+	wxBoxSizer* box = wxDynamicCast(sizer, wxBoxSizer);
+	if ((box == NULL) || (box->GetOrientation() != wxVERTICAL)) {
+		return;
+	}
+
+	// Backwards: every insertion shifts the items after it along.
+	for (size_t i = items.GetCount(); i > 1; --i) {
+		wxSizerItem* above = items.Item(i - 2)->GetData();
+		wxSizerItem* below = items.Item(i - 1)->GetData();
+
+		// Nothing to separate when one side is already blank space, and
+		// nothing worth separating when one side is hidden -- several
+		// pages hide rows per platform, and a gap next to a hidden row
+		// reads as a stray hole.
+		if (above->IsSpacer() || below->IsSpacer()) {
+			continue;
+		}
+		if (!above->IsShown() || !below->IsShown()) {
+			continue;
+		}
+
+		sizer->InsertSpacer(i - 1, gap);
+	}
+}
+
+
+/**
+ * The flags a preference page is placed into its container with.
+ *
+ * Shared by all three call sites -- initial fill, the default page, and
+ * the swap in OnPrefsPageChange -- because a page that is padded in one
+ * of them and not the others visibly jumps as the user clicks down the
+ * list.
+ */
+wxSizerFlags PrefsPageFlags(const wxWindow* win)
+{
+	return wxSizerFlags().Expand().Border(wxALL, win->FromDIP(PREFS_PAGE_PAD_DIP));
+}
+
+} // namespace
+
+
 PrefsPage pages[] =
 {
 	{ wxTRANSLATE("General"),			PreferencesGeneralTab,		13 },
@@ -243,12 +346,19 @@ wxDialog(parent, -1, _("Preferences"),
 		// Widget is stored as user data in the list control
 		m_PrefsIcons->SetItemPtrData(i, (wxUIntPtr) Widget);
 		pages[i].m_function(Widget, true, true);
+
+		// Open the page up before anything measures it: the per-page
+		// Fit() further down is what feeds the dialog's minimum size,
+		// so the spacing has to be in place by then or every page ends
+		// up with a scrollbar's worth of content it can't show.
+		RelaxSizerSpacing(Widget->GetSizer(), FromDIP(PREFS_ROW_GAP_DIP));
+
 		if (i == 0) {
 			DefaultWidget = Widget;
 		}
 
 		// Add it to the sizer
-		prefs_sizer->Add(Widget, wxSizerFlags().Expand().Expand());
+		prefs_sizer->Add(Widget, PrefsPageFlags(this));
 
 		if (pages[i].m_function == PreferencesGeneralTab) {
 			// This must be done now or pages won't Fit();
@@ -368,7 +478,7 @@ wxDialog(parent, -1, _("Preferences"),
 
 	// Default to the General tab
 	m_CurrentPanel = DefaultWidget;
-	prefs_sizer->Add(DefaultWidget, wxSizerFlags().Expand().Expand());
+	prefs_sizer->Add(DefaultWidget, PrefsPageFlags(this));
 	m_CurrentPanel->Show( true );
 
 	// Select the first item
@@ -400,6 +510,27 @@ wxDialog(parent, -1, _("Preferences"),
 	// It must not be resized to something smaller than what it currently is
 	wxSize size = GetClientSize();
 	SetSizeHints(size.GetWidth(), size.GetHeight());
+
+	// Fit() leaves the dialog exactly as large as its tightest page, which
+	// is where the cramped look comes from -- every control ends up against
+	// the frame with nothing to spare, and the pages with the most in them
+	// are the ones that suffer. Keep that as the floor, since it is what
+	// guarantees no page is ever clipped, and open at something roomier.
+	wxSize target = FromDIP(wxSize(PREFS_PREFERRED_W_DIP, PREFS_PREFERRED_H_DIP));
+	target.IncTo(GetSize());
+
+	// Then give the screen the last word. A preferences dialog taller than
+	// the display is worse than a cramped one: the OK button ends up
+	// somewhere below the bottom edge, and on Windows a dialog cannot be
+	// dragged above the top of the screen to get at it.
+	int displayIdx = wxDisplay::GetFromWindow(this);
+	if (displayIdx == wxNOT_FOUND) {
+		displayIdx = 0;
+	}
+	const wxRect usable = wxDisplay(displayIdx).GetClientArea();
+	target.DecTo(usable.GetSize());
+
+	SetSize(target);
 
 	// Position the dialog.
 	Center();
@@ -1222,7 +1353,7 @@ void PrefsUnifiedDlg::OnPrefsPageChange(wxListEvent& event)
 		CastChild(IDC_SHARESELECTOR, CDirectoryTreeCtrl)->Init();
 	}
 
-	prefs_sizer->Add( m_CurrentPanel, wxSizerFlags().Expand().Expand());
+	prefs_sizer->Add( m_CurrentPanel, PrefsPageFlags(this));
 	m_CurrentPanel->Show( true );
 
 	Layout();
