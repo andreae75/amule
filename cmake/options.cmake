@@ -209,5 +209,12 @@ IF (WIN32)
 ENDIF (WIN32)
 
 if (NEED_LIB_MULEAPPCOMMON OR BUILD_WEBSERVER)
-	option (ENABLE_UPNP "enable UPnP support in aMule" ON)
+	# Off by default in this fork. UPnP means pulling in libupnp (pupnp) and
+	# libixml — an XML/HTTP stack that parses SSDP announcements and device
+	# descriptions from whatever is on the LAN, i.e. the widest attack surface
+	# of anything we link, for the sake of one convenience: asking the router
+	# to forward a port. Forwarding it by hand once costs less than carrying
+	# the dependency. The feature itself is untouched; -DENABLE_UPNP=YES still
+	# builds it exactly as before.
+	option (ENABLE_UPNP "enable UPnP support in aMule" OFF)
 endif()

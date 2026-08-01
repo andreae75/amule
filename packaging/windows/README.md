@@ -196,7 +196,7 @@ the portable .zip and the installer .exe when both exist in `dist/`.
 - `WINDOWS_MSYSTEM` — default toolchain selection (CLANGARM64 or MINGW64)
 - Signing variable name documentation
 
-wxWidgets, cryptopp, libupnp etc. come from MSYS2's currently-installed
+wxWidgets, cryptopp etc. come from MSYS2's currently-installed
 versions; we rely on MSYS2 as source of truth on Windows dev machines.
 CI runners pin via `pacman -S --needed mingw-w64-<arch>-<pkg>` after
 explicit version selection if reproducibility becomes an issue.

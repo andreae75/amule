@@ -21,7 +21,7 @@ the standard C library on most GNU systems.
 | Package                    | Minimum | What it enables                                                          |
 | -------------------------- | ------- | ------------------------------------------------------------------------ |
 | `libgd`                    | 2.0.0   | statistics images in `cas`                                               |
-| `libupnp`                  | 1.6.6   | UPnP port forwarding                                                     |
+| `libupnp`                  | 1.6.6   | UPnP port forwarding — off by default, see `ENABLE_UPNP` below            |
 | `libmaxminddb`             | 1.0     | country flags + IP→country mapping ([docs/IP2Country.md](IP2Country.md)) |
 | `gettext`                  | 0.11.5  | native-language support (NLS)                                            |
 | `libayatana-appindicator3` | —       | **Linux only.** StatusNotifierItem tray icon                             |
@@ -130,8 +130,16 @@ Common `-D` options (`YES` / `NO`):
 | `BUILD_ALCC`         | NO      | aMuleLinkCreator console                                         |
 | `BUILD_FILEVIEW`     | NO      | console file viewer (experimental)                               |
 | `ENABLE_NLS`         | YES     | native-language support (gettext)                                |
-| `ENABLE_UPNP`        | YES     | UPnP port forwarding                                             |
+| `ENABLE_UPNP`        | NO      | UPnP port forwarding — see the note below                        |
 | `ENABLE_IP2COUNTRY`  | NO      | libmaxminddb country flags ([docs/IP2Country.md](IP2Country.md)) |
+
+`ENABLE_UPNP` is off by default in this fork, and no build driver or CI job
+turns it back on. UPnP is one convenience — asking the router to open a port —
+paid for by linking libupnp and libixml, an XML/HTTP stack that parses SSDP
+announcements and device descriptions from anything on the local network.
+Forwarding the port by hand once costs less than carrying that. The feature
+itself is untouched: `-DENABLE_UPNP=YES` builds it exactly as before, provided
+libupnp is installed.
 
 For the full list:
 

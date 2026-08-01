@@ -7,7 +7,7 @@
 
     aMule su Windows si compila con MSYS2/MINGW64 (e' la via usata dalla CI,
     vedi .github/workflows/ccpp.yml): le dipendenze -- wxWidgets, Crypto++,
-    Boost, libupnp, zlib -- arrivano dai pacchetti MSYS2. Questo script fa da
+    Boost, zlib -- arrivano dai pacchetti MSYS2. Questo script fa da
     ponte: rileva MSYS2, verifica il toolchain, e instrada cmake/ninja nella
     shell MINGW64 corretta.
 
@@ -183,7 +183,6 @@ if ($Bootstrap) {
         'mingw-w64-x86_64-wxwidgets3.2-msw'
         'mingw-w64-x86_64-zlib'
         'mingw-w64-x86_64-gettext'
-        'mingw-w64-x86_64-pupnp'
         'mingw-w64-x86_64-python'
     )
     if ($All) {

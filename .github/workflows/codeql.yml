@@ -35,7 +35,6 @@ env:
     libglib2.0-dev \
     libmaxminddb-dev \
     libreadline-dev \
-    libupnp-dev \
     libwxgtk3.2-dev \
     pkg-config \
     wx3.2-headers
@@ -54,8 +53,7 @@ env:
     -DBUILD_REMOTEGUI=YES \
     -DBUILD_TESTING=YES \
     -DBUILD_WEBSERVER=YES \
-    -DENABLE_NLS=YES \
-    -DENABLE_UPNP=YES
+    -DENABLE_NLS=YES
 
   cmake_ubuntu_config_flags: |-
     -DENABLE_IP2COUNTRY=YES

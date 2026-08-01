@@ -37,8 +37,8 @@ VERSION=$(cd "${REPO_ROOT}" && git describe --tags --always --dirty 2>/dev/null 
 APP_BUNDLE="${BUILD_DIR}/src/aMule.app"
 GUI_BUNDLE="${BUILD_DIR}/src/aMuleGUI.app"
 
-# Homebrew prefix for dependency lookups (cryptopp, libupnp, libgd,
-# gettext, etc.). Same logic as packaging/linux/* but adapted for
+# Homebrew prefix for dependency lookups (cryptopp, libgd, gettext,
+# etc.). Same logic as packaging/linux/* but adapted for
 # Apple Silicon's /opt/homebrew vs Intel's /usr/local layout.
 BREW_PREFIX="$(brew --prefix)"
 
@@ -60,7 +60,7 @@ build() {
     # can find Homebrew headers.
     export CPATH="${BREW_PREFIX}/include"
     export LIBRARY_PATH="${BREW_PREFIX}/lib"
-    export PKG_CONFIG_PATH="${BREW_PREFIX}/lib/pkgconfig:$(brew --prefix gd)/lib/pkgconfig:$(brew --prefix libupnp)/lib/pkgconfig:$(brew --prefix gettext)/lib/pkgconfig"
+    export PKG_CONFIG_PATH="${BREW_PREFIX}/lib/pkgconfig:$(brew --prefix gd)/lib/pkgconfig:$(brew --prefix gettext)/lib/pkgconfig"
     export PATH="$(brew --prefix gettext)/bin:${PATH}"
 
     # MACOS_ARCHITECTURES empty → native arch (whatever Homebrew
@@ -87,7 +87,6 @@ build() {
         -DBUILD_ALCC=YES \
         -DBUILD_TESTING=NO \
         -DENABLE_NLS=YES \
-        -DENABLE_UPNP=YES \
         -DENABLE_IP2COUNTRY=YES
 
     echo "==> Building"

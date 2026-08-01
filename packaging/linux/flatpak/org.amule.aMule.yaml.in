@@ -27,7 +27,7 @@ build-options:
     MAKEFLAGS: "-j2"
 
 finish-args:
-  # Networking (ed2k + Kad + WebUI + EC + UPnP).
+  # Networking (ed2k + Kad + WebUI + EC).
   - --share=network
   # GUI.
   - --share=ipc
@@ -95,29 +95,6 @@ modules:
         x-checker-data:
           type: git
           tag-pattern: ^CRYPTOPP_(\d+)_(\d+)_(\d+)$
-
-  - name: libupnp
-    buildsystem: cmake-ninja
-    # libupnp's CMakeLists hard-codes lib64 as the install dir on
-    # x86_64 and aarch64 alike (it doesn't go through GNUInstallDirs
-    # the usual way), so libupnp.pc lands at
-    # /app/lib64/pkgconfig/libupnp.pc. Flatpak's downstream
-    # PKG_CONFIG_PATH only searches /app/lib/pkgconfig/, so
-    # pkg_check_modules(LIBUPNP libupnp) in cmake/upnp.cmake fails
-    # to find the package and the build errors out via the
-    # ENABLE_UPNP=YES hard-fail introduced in PR #511. Force
-    # CMAKE_INSTALL_LIBDIR=lib so the .pc and the .so land where
-    # Flatpak expects.
-    config-opts:
-      - -DUPNP_BUILD_SAMPLES=OFF
-      - -DUPNP_BUILD_TESTS=OFF
-      - -Dreuseaddr=ON
-      - -Dipv6=ON
-      - -DCMAKE_INSTALL_LIBDIR=lib
-    sources:
-      - type: archive
-        url: ${LIBUPNP_TARBALL_URL}
-        sha256: ${LIBUPNP_SHA256}
 
   - name: boost
     # GNOME Platform doesn't ship Boost. aMule needs Boost.Asio
@@ -325,7 +302,6 @@ modules:
       - -DBUILD_ALC=YES
       - -DBUILD_ALCC=YES
       - -DENABLE_NLS=YES
-      - -DENABLE_UPNP=YES
       - -DENABLE_IP2COUNTRY=YES
     # AMULE_REVISION (in versions.env) controls what gets built:
     #   - "master" or another branch -> branch: <name> at flatpak-builder time

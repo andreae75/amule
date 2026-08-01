@@ -40,7 +40,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         # redistribution; users drop it in ~/.aMule/.
         libmaxminddb-dev \
         libreadline-dev \
-        libupnp-dev \
         # libcurl: backend for wxWebRequest, which aMule's HTTP path requires.
         libcurl4-openssl-dev \
         # GTK3 dev headers (linker target for wx) + Wayland/X11 client headers

@@ -27,7 +27,6 @@ env:
     libglib2.0-dev \
     libmaxminddb-dev \
     libreadline-dev \
-    libupnp-dev \
     libwxgtk3.2-dev \
     pkg-config \
     wx3.2-headers
@@ -39,7 +38,6 @@ env:
     gd \
     gettext \
     libmaxminddb \
-    libupnp \
     pkg-config \
     wxwidgets
 
@@ -53,7 +51,6 @@ env:
     mingw-w64-x86_64-libmaxminddb
     mingw-w64-x86_64-ninja
     mingw-w64-x86_64-pkgconf
-    mingw-w64-x86_64-pupnp
     mingw-w64-x86_64-readline
     mingw-w64-x86_64-toolchain
     mingw-w64-x86_64-wxwidgets3.2-msw
@@ -72,8 +69,7 @@ env:
     -DBUILD_REMOTEGUI=YES \
     -DBUILD_TESTING=YES \
     -DBUILD_WEBSERVER=YES \
-    -DENABLE_NLS=YES \
-    -DENABLE_UPNP=YES
+    -DENABLE_NLS=YES
 
   cmake_ubuntu_config_flags: |-
     -DENABLE_IP2COUNTRY=YES
@@ -164,7 +160,7 @@ jobs:
           BREW_PREFIX=$(brew --prefix)
           echo "CPATH=$BREW_PREFIX/include" >> "$GITHUB_ENV"
           echo "LIBRARY_PATH=$BREW_PREFIX/lib" >> "$GITHUB_ENV"
-          echo "PKG_CONFIG_PATH=$BREW_PREFIX/lib/pkgconfig:$(brew --prefix gd)/lib/pkgconfig:$(brew --prefix libupnp)/lib/pkgconfig:$(brew --prefix gettext)/lib/pkgconfig" >> "$GITHUB_ENV"
+          echo "PKG_CONFIG_PATH=$BREW_PREFIX/lib/pkgconfig:$(brew --prefix gd)/lib/pkgconfig:$(brew --prefix gettext)/lib/pkgconfig" >> "$GITHUB_ENV"
           # gettext is keg-only on macOS; add msgfmt to PATH for NLS probe
           echo "$(brew --prefix gettext)/bin" >> "$GITHUB_PATH"
       - name: create build system

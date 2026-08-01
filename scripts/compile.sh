@@ -89,7 +89,6 @@ cmake_configure () {
 		-DBUILD_TESTING=YES \
 		-DBUILD_WEBSERVER=YES \
 		-DENABLE_NLS=YES \
-		-DENABLE_UPNP=YES \
 		-DENABLE_IP2COUNTRY=YES
 
 	die 22 "CMake configuration failed"

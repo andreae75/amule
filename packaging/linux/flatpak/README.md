@@ -5,7 +5,7 @@ which provides GTK3 / glib / pixman / fontconfig / libpng / zlib / freetype.
 
 `flatpak-external-data-checker` runs daily against the manifest (set up
 in the Flathub repo's CI) and opens PRs when upstream releases for
-`cryptopp`, `libupnp`, `libgd`, `wxWidgets`, or aMule itself are detected.
+`cryptopp`, `libgd`, `wxWidgets`, or aMule itself are detected.
 
 ## Files
 
@@ -49,18 +49,6 @@ packaging/linux/build.sh render-flatpak-manifest
 
 To produce all 4 artifacts (appimage+flatpak × x86_64+aarch64) in one
 go: `packaging/linux/build.sh all`.
-
-## Pending before first build
-
-The `libupnp` SHA256 in `packaging/linux/versions.env` is a placeholder.
-On the first local build:
-
-```sh
-sha256sum <path-to-libupnp-release-tarball>
-```
-
-…and paste it into `versions.env`. After that, `flatpak-external-data-checker`
-keeps all hashes in sync.
 
 ## Flathub submission
 

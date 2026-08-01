@@ -15,7 +15,7 @@ packaging/macos/build.sh
 
 The host needs:
 - macOS 11+ with Xcode Command Line Tools
-- Homebrew with: `cmake`, `wxwidgets`, `cryptopp`, `libupnp`, `gd`, `gettext`, `boost`, `dylibbundler`, `libmaxminddb`
+- Homebrew with: `cmake`, `wxwidgets`, `cryptopp`, `gd`, `gettext`, `boost`, `dylibbundler`, `libmaxminddb`
 - `hdiutil` (built into every macOS)
 
 `packaging/macos/build.sh` sources `packaging/macos/versions.env` for the
@@ -64,7 +64,7 @@ all six as repo secrets.
 - `MACOS_DEPLOYMENT_TARGET` — bump up only if a dep requires it
 - `MACOS_ARCHITECTURES` — keep `x86_64;arm64` for Universal2
 
-Other version pins (wxWidgets, cryptopp, libupnp, libgd) come from
+Other version pins (wxWidgets, cryptopp, libgd) come from
 Homebrew's currently-installed versions; we deliberately don't pin them
 here because Homebrew is the source of truth on macOS dev machines.
 CI runners pin via `brew pin <pkg>` if reproducibility becomes an issue.
