@@ -18,7 +18,8 @@ The fork tag exists only where a human reads it.
 ## What's different
 
 Everything in this table is on top of the upstream tree this fork started from.
-Nothing here changes the eD2k or Kad protocols.
+Nothing here changes the eD2k or Kad protocols. Version by version, with dates:
+[`CHANGELOG.md`](CHANGELOG.md).
 
 | Area | Change | Why it matters | Commit |
 | :-- | :-- | :-- | :-- |
@@ -31,6 +32,7 @@ Nothing here changes the eD2k or Kad protocols.
 | **All lists** | **Auto-fit columns to window** in the column header menu: the visible columns are scaled to fill the list's width and follow it on every resize. Per list, remembered across restarts; dragging a divider hands control back. | Columns used to leave dead space on the right while the last one stayed cut off. Content-measuring auto-size is not an option here — the lists are owner-drawn, so their cells hold no text to measure. | [`f17f60d`](../../commit/f17f60d) |
 | **Kad** | A dockable **Kad Routing Table** pane (View menu): the bucket tree drawn as an icicle plot — horizontal axis is the 128-bit ID space, each leaf filled by how full its bucket is — with the contacts of the selected leaf listed below (ID, address, version, liveliness, verified, age). | The routing table is the structure Kad actually runs on, and every client of this family exposes exactly one number from it: the node count. Read-only, local core only. | [`074a98d`](../../commit/074a98d) |
 | **Identity** | `AMULE_FORK_NAME` / `AMULE_FORK_VERSION`, surfaced in the About box, the startup banner, the tray menu and the Windows version resource — and nowhere else. | Tells this binary apart from an upstream one without misreporting the client to the network. See [Network identity](#network-identity). | [`f4b49cf`](../../commit/f4b49cf) |
+| **Attack surface** | UPnP is off by default and no longer built: `ENABLE_UPNP` defaults to `OFF`, and no build driver, packaging script or CI job turns it back on. libupnp and libixml are gone from every dependency list. | UPnP buys one convenience — asking the router to open a port — and pays for it with an XML/HTTP stack that parses SSDP announcements and device descriptions from anything on the LAN. Forwarding the port by hand once costs less. `-DENABLE_UPNP=YES` still builds the feature unchanged. | [`6afe9b3`](../../commit/6afe9b3) |
 | **Build (Windows)** | [`compile.ps1`](compile.ps1): one command from a fresh checkout to `amule.exe`, driving CMake and Ninja through an MSYS2 MINGW64 shell. `-Bootstrap` installs the whole MSYS2 dependency set; `-All` widens the build to the daemon, remote GUI, webserver and utilities. | `scripts/compile.sh` assumes a POSIX shell, so on Windows there was no one-command build path at all. | [`fbd20d0`](../../commit/fbd20d0) |
 | **Docs** | [`CLAUDE.md`](CLAUDE.md): build options, the MuleUnit/ctest workflow, and the architecture that spans several files — the one-tree-many-binaries target layout, the `Notify_*` layer between engine and wx, the EC protocol and its generated headers. | Also records the two silent footguns: a missing `po/POTFILES.in` entry, and the i18n CI drift gate. | [`29c2cd9`](../../commit/29c2cd9) |
 
