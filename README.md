@@ -4,7 +4,9 @@
 
 # aMule — NeRvOuX Edition
 
-**A personal fork of aMule 3.0.0, focused on the desktop experience — mostly on Windows.**
+### version 0.3.0 · based on aMule 3.0.0
+
+**A personal fork focused on the desktop experience — mostly on Windows.**
 
 On the eD2k network this build is indistinguishable from stock aMule.
 The fork tag exists only where a human reads it.
