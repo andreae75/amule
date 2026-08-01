@@ -68,6 +68,14 @@ enum {
 	MP_GETAICHED2KLINK,
 	MP_GETAICHED2KLINKSRC,
 	MP_METINFO,
+
+// Copy the selected rows of a list to the clipboard, one entry per format.
+// Kept contiguous and in this order: handlers use them as a range.
+	MP_COPYSEL_TEXT,
+	MP_COPYSEL_CSV,
+	MP_COPYSEL_JSON,
+	MP_COPYSEL_HTML,
+
 	MP_CONNECTTO,
 	MP_REMOVE,
 	MP_REMOVEALL,
@@ -105,6 +113,7 @@ enum {
 	MP_MENU_PRIO,
 	MP_MENU_EXTD,
 	MP_MENU_CATS,
+	MP_MENU_COPYSEL,
 
 // CMuleListCtrl tabs.
 	MP_LISTCOL_1,

@@ -152,6 +152,41 @@ private:
 	virtual wxString GetTTSText(unsigned item) const;
 
 
+	//! Formats understood by BuildSelectionText().
+	enum ClipboardFormat {
+		FormatPlainText,
+		FormatCSV,
+		FormatJSON,
+		FormatHTML
+	};
+
+	/**
+	 * Returns the textual contents of a single cell.
+	 *
+	 * @param file The file the row represents.
+	 * @param column One of ColumnEnum.
+	 *
+	 * This list is owner-drawn, so cells hold no text of their own: this
+	 * is the only place where the text of a row is produced. Both the
+	 * drawing code and the clipboard export go through it, so what gets
+	 * copied is always what is on screen.
+	 */
+	wxString GetCellText( const CPartFile* file, int column ) const;
+
+	/**
+	 * Renders the selected rows in the specified format.
+	 *
+	 * @param format The desired output format.
+	 * @return The rendered text, or an empty string if nothing is selected.
+	 */
+	wxString BuildSelectionText( ClipboardFormat format );
+
+	/**
+	 * Places the selected rows on the clipboard in the specified format.
+	 */
+	void CopySelectionToClipboard( ClipboardFormat format );
+
+
 	/**
 	 * Overloaded function needed for custom drawing of items.
 	 */
@@ -182,6 +217,7 @@ private:
 	void	OnViewFileInfo( wxCommandEvent& event );
 	void	OnViewFileComments( wxCommandEvent& event );
 	void	OnPreviewFile( wxCommandEvent& event );
+	void	OnCopySelection( wxCommandEvent& event );
 
 	// Misc event-handlers
 	void	OnItemActivated( wxListEvent& event );
