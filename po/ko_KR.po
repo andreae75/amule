@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: aMule\n"
 "Report-Msgid-Bugs-To: https://github.com/amule-org/amule/issues\n"
-"POT-Creation-Date: 2026-08-01 19:58+0200\n"
+"POT-Creation-Date: 2026-08-01 20:33+0200\n"
 "PO-Revision-Date: 2020-03-04 14:46+0100\n"
 "Last-Translator: Hyunju Kang <rexington@gmail.com>\n"
 "Language-Team: Korean <hoenny@daum.net>\n"
@@ -205,7 +205,7 @@ msgid "Password set and external connections enabled."
 msgstr "새로운 외부연결이 승인되었습니다."
 
 #: src/amule.cpp:595 src/KadDlg.cpp:183 src/KadDlg.cpp:189
-#: src/PrefsUnifiedDlg.cpp:850 src/SharedFilesCtrl.cpp:329
+#: src/PrefsUnifiedDlg.cpp:850 src/SharedFilesCtrl.cpp:330
 msgid "WARNING"
 msgstr "경고"
 
@@ -506,17 +506,17 @@ msgstr ""
 msgid "ERROR: %s"
 msgstr "오류: %s"
 
-#: src/amuleDlg.cpp:262
+#: src/amuleDlg.cpp:265
 #, c-format
 msgid "This is aMule %s based on eMule."
 msgstr "이 어뮬 %s는 이뮬 기반으로 되어있습니다."
 
-#: src/amuleDlg.cpp:264
+#: src/amuleDlg.cpp:267
 #, c-format
 msgid "Running on %s"
 msgstr "%s에 동작중"
 
-#: src/amuleDlg.cpp:266
+#: src/amuleDlg.cpp:269
 msgid ""
 "Visit https://github.com/amule-org/amule/releases/latest to check if a new "
 "version is available."
@@ -524,152 +524,198 @@ msgstr ""
 "https://github.com/amule-org/amule/releases/latest에 방문하셔서 새로운버젼이 "
 "있는지 확인하십시오."
 
-#: src/amuleDlg.cpp:292
+#: src/amuleDlg.cpp:295
 msgid "FATAL ERROR: Failed to create Timer"
 msgstr ""
 
-#: src/amuleDlg.cpp:420
+#: src/amuleDlg.cpp:423
 #, fuzzy
 msgid "Transfers"
 msgstr "전송"
 
-#: src/amuleDlg.cpp:421 src/amuleDlg.cpp:1733 src/amuleDlg.cpp:1889
+#: src/amuleDlg.cpp:424 src/amuleDlg.cpp:1812 src/amuleDlg.cpp:1968
 #: src/muuli_wdr.cpp:1402 src/muuli_wdr.cpp:2963
 msgid "Networks"
 msgstr "통신망"
 
-#: src/amuleDlg.cpp:422 src/amuleDlg.cpp:1734 src/muuli_wdr.cpp:2964
+#: src/amuleDlg.cpp:425 src/amuleDlg.cpp:1813 src/muuli_wdr.cpp:2964
 msgid "Searches"
 msgstr "검색"
 
-#: src/amuleDlg.cpp:423 src/muuli_wdr.cpp:2967 src/SharedFilesCtrl.cpp:140
+#: src/amuleDlg.cpp:426 src/muuli_wdr.cpp:2967 src/SharedFilesCtrl.cpp:140
 #: src/Statistics.cpp:864
 msgid "Shared Files"
 msgstr "공유 파일"
 
-#: src/amuleDlg.cpp:424 src/amuleDlg.cpp:1737 src/muuli_wdr.cpp:2496
+#: src/amuleDlg.cpp:427 src/amuleDlg.cpp:1816 src/muuli_wdr.cpp:2496
 #: src/muuli_wdr.cpp:2921 src/muuli_wdr.cpp:2968
 msgid "Messages"
 msgstr "메시지"
 
-#: src/amuleDlg.cpp:425 src/amuleDlg.cpp:1738 src/muuli_wdr.cpp:2969
+#: src/amuleDlg.cpp:428 src/amuleDlg.cpp:1817 src/muuli_wdr.cpp:2969
 #: src/PrefsUnifiedDlg.cpp:192 src/Statistics.cpp:776 src/Statistics.cpp:1073
 msgid "Statistics"
 msgstr "통계"
 
-#: src/amuleDlg.cpp:426
+#: src/amuleDlg.cpp:429
 msgid "Kad Routing Table"
 msgstr ""
 
-#: src/amuleDlg.cpp:522
+#: src/amuleDlg.cpp:525
 #, fuzzy
 msgid "&Reset Layout"
 msgstr "로그를 초기화합니다."
 
-#: src/amuleDlg.cpp:525
+#: src/amuleDlg.cpp:528
 msgid "&View"
 msgstr ""
 
-#: src/amuleDlg.cpp:779
+#: src/amuleDlg.cpp:788
+#, fuzzy
+msgid "About aMule"
+msgstr "어뮬 보이기"
+
+#: src/amuleDlg.cpp:825 src/KadRoutingWnd.cpp:337 src/ServerListCtrl.cpp:97
+#: src/SharedFilePeersListCtrl.cpp:34 src/SourceListCtrl.cpp:33
+#: src/Statistics.cpp:1008
+msgid "Version"
+msgstr "버젼"
+
+#: src/amuleDlg.cpp:832
+msgid "built against"
+msgstr ""
+
+#: src/amuleDlg.cpp:833
+#, fuzzy
+msgid "running"
+msgstr "동작중"
+
+#: src/amuleDlg.cpp:836
+#, fuzzy
+msgid "Compiler"
+msgstr "완료"
+
+#: src/amuleDlg.cpp:839
+msgid "Built"
+msgstr ""
+
+#: src/amuleDlg.cpp:841
+#, fuzzy
+msgid "Paths"
+msgstr "FTP 경로"
+
+#: src/amuleDlg.cpp:842
+#, fuzzy
+msgid "Configuration"
+msgstr "종료 확인"
+
+#: src/amuleDlg.cpp:843 src/PrefsUnifiedDlg.cpp:1120
+msgid "Temporary files"
+msgstr "임시 파일"
+
+#: src/amuleDlg.cpp:844 src/PrefsUnifiedDlg.cpp:1125
+msgid "Incoming files"
+msgstr "내려받은 파일"
+
+#: src/amuleDlg.cpp:846
+#, fuzzy
+msgid "Operating system"
+msgstr "운영체제"
+
+#: src/amuleDlg.cpp:856
 msgid "aMule remote control "
 msgstr "어뮬 원격제어"
 
-#: src/amuleDlg.cpp:785
+#: src/amuleDlg.cpp:862
 msgid "Snapshot:"
 msgstr "스냅삿"
 
-#: src/amuleDlg.cpp:791
+#: src/amuleDlg.cpp:868
 msgid ""
 "'All-Platform' p2p client based on eMule \n"
 "\n"
 msgstr ""
 
-#: src/amuleDlg.cpp:792
+#: src/amuleDlg.cpp:869
 msgid "Website: https://amule-org.github.io \n"
 msgstr ""
 
-#: src/amuleDlg.cpp:793
+#: src/amuleDlg.cpp:870
 msgid "Forum: https://github.com/amule-org/amule/discussions \n"
 msgstr ""
 
-#: src/amuleDlg.cpp:794
+#: src/amuleDlg.cpp:871
 #, fuzzy
 msgid "Documentation: https://amule-org.github.io/docs \n"
 msgstr "\t더 많은 정보는 https://amule-org.github.io/docs을 참조하세요."
 
-#: src/amuleDlg.cpp:795
+#: src/amuleDlg.cpp:872
 #, fuzzy
 msgid ""
 "Issues: https://github.com/amule-org/amule/issues \n"
 "\n"
 msgstr "버그는 https://github.com/amule-org/amule/issues로 보고해 주십시오."
 
-#: src/amuleDlg.cpp:796
+#: src/amuleDlg.cpp:873
 msgid ""
 "Copyright (c) 2003-2026 aMule Team \n"
 "\n"
 msgstr ""
 
-#: src/amuleDlg.cpp:797
+#: src/amuleDlg.cpp:874
 msgid "Part of aMule is based on \n"
 msgstr ""
 
-#: src/amuleDlg.cpp:798
+#: src/amuleDlg.cpp:875
 msgid "Kademlia: Peer-to-peer routing based on the XOR metric.\n"
 msgstr ""
 
-#: src/amuleDlg.cpp:799
+#: src/amuleDlg.cpp:876
 msgid " Copyright (c) 2002-2011 Petar Maymounkov ( petar@maymounkov.org )\n"
 msgstr ""
 
-#: src/amuleDlg.cpp:800
+#: src/amuleDlg.cpp:877
 msgid "https://pdos.csail.mit.edu/~petar/papers/maymounkov-kademlia-lncs.pdf\n"
 msgstr ""
 
-#: src/amuleDlg.cpp:803 src/KadDlg.cpp:193 src/PartFile.cpp:1032
-#: src/PrefsUnifiedDlg.cpp:712 src/PrefsUnifiedDlg.cpp:837
-#: src/PrefsUnifiedDlg.cpp:980
-msgid "Message"
-msgstr "메시지"
-
-#: src/amuleDlg.cpp:847
+#: src/amuleDlg.cpp:926
 msgid "aMule dialog destroyed"
 msgstr ""
 
-#: src/amuleDlg.cpp:871 src/DataToText.cpp:59 src/IPFilter.cpp:544
+#: src/amuleDlg.cpp:950 src/DataToText.cpp:59 src/IPFilter.cpp:544
 msgid "Connecting"
 msgstr "연결중"
 
-#: src/amuleDlg.cpp:1000
+#: src/amuleDlg.cpp:1079
 msgid "eD2k: Connecting"
 msgstr ""
 
-#: src/amuleDlg.cpp:1004
+#: src/amuleDlg.cpp:1083
 msgid "eD2k: Disconnected"
 msgstr ""
 
-#: src/amuleDlg.cpp:1010
+#: src/amuleDlg.cpp:1089
 #, fuzzy
 msgid "Kad: Firewalled"
 msgstr "방화벽"
 
-#: src/amuleDlg.cpp:1014
+#: src/amuleDlg.cpp:1093
 #, fuzzy
 msgid "Kad: Connected"
 msgstr "연결됨"
 
-#: src/amuleDlg.cpp:1019
+#: src/amuleDlg.cpp:1098
 #, fuzzy
 msgid "Kad: Connecting"
 msgstr "연결중"
 
-#: src/amuleDlg.cpp:1023
+#: src/amuleDlg.cpp:1102
 #, fuzzy
 msgid "Kad: Off"
 msgstr " Kad: "
 
-#: src/amuleDlg.cpp:1070 src/DownloadListCtrl.cpp:441
-#: src/DownloadListCtrl.cpp:904 src/FriendListCtrl.cpp:179
+#: src/amuleDlg.cpp:1149 src/DownloadListCtrl.cpp:435
+#: src/DownloadListCtrl.cpp:673 src/FriendListCtrl.cpp:179
 #: src/muuli_wdr.cpp:681 src/muuli_wdr.cpp:732 src/muuli_wdr.cpp:794
 #: src/muuli_wdr.cpp:846 src/muuli_wdr.cpp:1966 src/muuli_wdr.cpp:2048
 #: src/muuli_wdr.cpp:2632 src/ServerListCtrl.cpp:154 src/ServerListCtrl.cpp:528
@@ -678,163 +724,163 @@ msgstr " Kad: "
 msgid "Cancel"
 msgstr "취소"
 
-#: src/amuleDlg.cpp:1071
+#: src/amuleDlg.cpp:1150
 #, fuzzy
 msgid "Stop the current connection attempts"
 msgstr "현재 연결시도를 멈춤"
 
-#: src/amuleDlg.cpp:1076 src/MuleTrayIcon.cpp:466 src/MuleTrayIcon.cpp:1058
+#: src/amuleDlg.cpp:1155 src/MuleTrayIcon.cpp:466 src/MuleTrayIcon.cpp:1058
 #: src/muuli_wdr.cpp:2170
 msgid "Disconnect"
 msgstr "연결 끊기"
 
-#: src/amuleDlg.cpp:1077
+#: src/amuleDlg.cpp:1156
 #, fuzzy
 msgid "Disconnect from the currently connected networks"
 msgstr "통신망으로부터 연결을 끊습니다."
 
-#: src/amuleDlg.cpp:1082 src/MuleTrayIcon.cpp:466 src/MuleTrayIcon.cpp:1061
+#: src/amuleDlg.cpp:1161 src/MuleTrayIcon.cpp:466 src/MuleTrayIcon.cpp:1061
 #: src/muuli_wdr.cpp:2319 src/muuli_wdr.cpp:2629 src/muuli_wdr.cpp:2961
 msgid "Connect"
 msgstr "연결"
 
-#: src/amuleDlg.cpp:1083
+#: src/amuleDlg.cpp:1162
 #, fuzzy
 msgid "Connect to the currently enabled networks"
 msgstr "통신망에 연결합니다."
 
-#: src/amuleDlg.cpp:1161
+#: src/amuleDlg.cpp:1240
 #, fuzzy, c-format
 msgid "Up: %.1f%s (%.1f) | Down: %.1f%s (%.1f)"
 msgstr "올려주기: %.1f(%.1f) | 내려받기: %.1f(%.1f)"
 
-#: src/amuleDlg.cpp:1162 src/amuleDlg.cpp:1163 src/amuleDlg.cpp:1166
-#: src/amuleDlg.cpp:1167 src/amuleDlg.cpp:1178 src/amuleDlg.cpp:1179
+#: src/amuleDlg.cpp:1241 src/amuleDlg.cpp:1242 src/amuleDlg.cpp:1245
+#: src/amuleDlg.cpp:1246 src/amuleDlg.cpp:1257 src/amuleDlg.cpp:1258
 #: src/MuleTrayIcon.cpp:879 src/MuleTrayIcon.cpp:882
 #, fuzzy
 msgid " MB/s"
 msgstr "MB/s"
 
-#: src/amuleDlg.cpp:1162 src/amuleDlg.cpp:1163 src/amuleDlg.cpp:1166
-#: src/amuleDlg.cpp:1167 src/amuleDlg.cpp:1178 src/amuleDlg.cpp:1179
+#: src/amuleDlg.cpp:1241 src/amuleDlg.cpp:1242 src/amuleDlg.cpp:1245
+#: src/amuleDlg.cpp:1246 src/amuleDlg.cpp:1257 src/amuleDlg.cpp:1258
 #: src/MuleTrayIcon.cpp:879 src/MuleTrayIcon.cpp:882
 #: src/utils/wxCas/src/wxcasframe.cpp:1110
 #, fuzzy
 msgid " kB/s"
 msgstr "kB/s"
 
-#: src/amuleDlg.cpp:1165
+#: src/amuleDlg.cpp:1244
 #, fuzzy, c-format
 msgid "Up: %.1f%s | Down: %.1f%s"
 msgstr "올려주기: %.1f | 내려받기: %.1f"
 
-#: src/amuleDlg.cpp:1195
+#: src/amuleDlg.cpp:1274
 #, c-format
 msgid "aMule (%s | Connected)"
 msgstr "어뮬 (%s | 연결됨)"
 
-#: src/amuleDlg.cpp:1197
+#: src/amuleDlg.cpp:1276
 #, c-format
 msgid "aMule (%s | Disconnected)"
 msgstr "어뮬 (%s | 끊김)"
 
-#: src/amuleDlg.cpp:1245
+#: src/amuleDlg.cpp:1324
 #, fuzzy, c-format
 msgid "Do you really want to exit %s?"
 msgstr "어뮬을 종료하시겠습니까?"
 
-#: src/amuleDlg.cpp:1246
+#: src/amuleDlg.cpp:1325
 msgid "Exit confirmation"
 msgstr "종료 확인"
 
-#: src/amuleDlg.cpp:1579
+#: src/amuleDlg.cpp:1658
 #, fuzzy
 msgid "Launch Command: "
 msgstr "명령: %s"
 
-#: src/amuleDlg.cpp:1599 src/muuli_wdr.cpp:1773 src/Preferences.cpp:846
+#: src/amuleDlg.cpp:1678 src/muuli_wdr.cpp:1773 src/Preferences.cpp:846
 msgid "- default -"
 msgstr ""
 
-#: src/amuleDlg.cpp:1629
+#: src/amuleDlg.cpp:1708
 #, c-format
 msgid "Skin directory '%s' does not exist"
 msgstr "외형 폴더 '%s'가 없습니다."
 
-#: src/amuleDlg.cpp:1634
+#: src/amuleDlg.cpp:1713
 #, c-format
 msgid "WARNING: Unable to open skin file '%s' for read"
 msgstr ""
 
-#: src/amuleDlg.cpp:1733 src/muuli_wdr.cpp:2963
+#: src/amuleDlg.cpp:1812 src/muuli_wdr.cpp:2963
 msgid "Networks Window"
 msgstr "통신망 창"
 
-#: src/amuleDlg.cpp:1734 src/muuli_wdr.cpp:2964
+#: src/amuleDlg.cpp:1813 src/muuli_wdr.cpp:2964
 msgid "Searches Window"
 msgstr "검색 창"
 
-#: src/amuleDlg.cpp:1735 src/DownloadListCtrl.cpp:895 src/muuli_wdr.cpp:379
+#: src/amuleDlg.cpp:1814 src/DownloadListCtrl.cpp:664 src/muuli_wdr.cpp:379
 #: src/muuli_wdr.cpp:1504 src/muuli_wdr.cpp:2965 src/Statistics.cpp:806
 msgid "Downloads"
 msgstr "내려받기"
 
-#: src/amuleDlg.cpp:1735 src/muuli_wdr.cpp:2965
+#: src/amuleDlg.cpp:1814 src/muuli_wdr.cpp:2965
 #, fuzzy
 msgid "Downloads Window"
 msgstr "받는중"
 
-#: src/amuleDlg.cpp:1736 src/muuli_wdr.cpp:2856
+#: src/amuleDlg.cpp:1815 src/muuli_wdr.cpp:2856
 msgid "Shared files"
 msgstr ""
 
-#: src/amuleDlg.cpp:1736 src/muuli_wdr.cpp:2967
+#: src/amuleDlg.cpp:1815 src/muuli_wdr.cpp:2967
 msgid "Shared Files Window"
 msgstr "공유 파일 창"
 
-#: src/amuleDlg.cpp:1737 src/muuli_wdr.cpp:2968
+#: src/amuleDlg.cpp:1816 src/muuli_wdr.cpp:2968
 msgid "Messages Window"
 msgstr "메시지 창"
 
-#: src/amuleDlg.cpp:1738 src/muuli_wdr.cpp:2969
+#: src/amuleDlg.cpp:1817 src/muuli_wdr.cpp:2969
 msgid "Statistics Graph Window"
 msgstr "통계 그래프 창"
 
-#: src/amuleDlg.cpp:1740 src/muuli_wdr.cpp:2971 src/PrefsUnifiedDlg.cpp:207
+#: src/amuleDlg.cpp:1819 src/muuli_wdr.cpp:2971 src/PrefsUnifiedDlg.cpp:207
 #: src/utils/wxCas/src/wxcasprefs.cpp:41
 msgid "Preferences"
 msgstr "환경설정"
 
-#: src/amuleDlg.cpp:1740 src/muuli_wdr.cpp:2971
+#: src/amuleDlg.cpp:1819 src/muuli_wdr.cpp:2971
 msgid "Preferences Settings Window"
 msgstr "환경 설정 창"
 
-#: src/amuleDlg.cpp:1742 src/muuli_wdr.cpp:2972
+#: src/amuleDlg.cpp:1821 src/muuli_wdr.cpp:2972
 msgid "Import"
 msgstr "가져오기"
 
-#: src/amuleDlg.cpp:1742 src/muuli_wdr.cpp:2972
+#: src/amuleDlg.cpp:1821 src/muuli_wdr.cpp:2972
 msgid "The partfile importer tool"
 msgstr "부분파일 가져오기 도구"
 
-#: src/amuleDlg.cpp:1744 src/muuli_wdr.cpp:2973
+#: src/amuleDlg.cpp:1823 src/muuli_wdr.cpp:2973
 #: src/utils/aLinkCreator/src/alcframe.cpp:265
 msgid "About"
 msgstr "정보"
 
-#: src/amuleDlg.cpp:1744 src/muuli_wdr.cpp:2973
+#: src/amuleDlg.cpp:1823 src/muuli_wdr.cpp:2973
 msgid "About/Help"
 msgstr "정보/도움"
 
-#: src/amuleDlg.cpp:1893
+#: src/amuleDlg.cpp:1972
 msgid "eD2k network"
 msgstr ""
 
-#: src/amuleDlg.cpp:1897
+#: src/amuleDlg.cpp:1976
 msgid "Kad network"
 msgstr ""
 
-#: src/amuleDlg.cpp:1897
+#: src/amuleDlg.cpp:1976
 msgid "No network"
 msgstr ""
 
@@ -922,8 +968,8 @@ msgstr ""
 #: src/ClientDetailDialog.cpp:119 src/ClientDetailDialog.cpp:120
 #: src/ClientDetailDialog.cpp:130 src/DataToText.cpp:52 src/DataToText.cpp:68
 #: src/DataToText.cpp:78 src/DataToText.cpp:114 src/DataToText.cpp:135
-#: src/DownloadListCtrl.cpp:1384 src/DownloadListCtrl.cpp:1397
-#: src/DownloadListCtrl.cpp:1408 src/ExternalConn.cpp:538
+#: src/DownloadListCtrl.cpp:1140 src/DownloadListCtrl.cpp:1153
+#: src/DownloadListCtrl.cpp:1164 src/ExternalConn.cpp:538
 #: src/FileDetailDialog.cpp:183 src/GenericClientListCtrl.cpp:1102
 #: src/GenericClientListCtrl.cpp:1113 src/GenericClientListCtrl.cpp:1123
 #: src/HTTPDownload.cpp:87 src/KadRoutingWnd.cpp:418 src/KnownFile.cpp:986
@@ -1038,8 +1084,8 @@ msgstr "known.met 파일을 저장하는 동안 오류: %s"
 msgid "Enter Captcha"
 msgstr ""
 
-#: src/CatDialog.cpp:60 src/DownloadListCtrl.cpp:953 src/muuli_wdr.cpp:240
-#: src/SearchListCtrl.cpp:648 src/TransferWnd.cpp:335
+#: src/CatDialog.cpp:60 src/DownloadListCtrl.cpp:716 src/muuli_wdr.cpp:240
+#: src/SearchListCtrl.cpp:668 src/TransferWnd.cpp:335
 msgid "Category"
 msgstr "분류"
 
@@ -1172,7 +1218,7 @@ msgid "Disconnected"
 msgstr "연결이 끊김"
 
 #: src/ClientDetailDialog.cpp:160 src/ClientDetailDialog.cpp:164
-#: src/DownloadListCtrl.cpp:1324 src/GenericClientListCtrl.cpp:926
+#: src/DownloadListCtrl.cpp:1080 src/GenericClientListCtrl.cpp:926
 #: src/GenericClientListCtrl.cpp:937
 #, c-format
 msgid "%.1f kB/s"
@@ -1264,7 +1310,7 @@ msgstr "파일 의견"
 msgid "Username"
 msgstr "사용자이름"
 
-#: src/CommentDialogLst.cpp:70 src/DownloadListCtrl.cpp:185
+#: src/CommentDialogLst.cpp:70 src/DownloadListCtrl.cpp:179
 #: src/FileDetailListCtrl.cpp:42 src/SearchListCtrl.cpp:87
 #: src/SharedFilesCtrl.cpp:107
 msgid "File Name"
@@ -1311,19 +1357,19 @@ msgstr "자동[높음]"
 msgid "Very low"
 msgstr "매우 낮음"
 
-#: src/DataToText.cpp:42 src/DownloadListCtrl.cpp:898 src/muuli_wdr.cpp:2017
+#: src/DataToText.cpp:42 src/DownloadListCtrl.cpp:667 src/muuli_wdr.cpp:2017
 #: src/ServerListCtrl.cpp:236 src/ServerListCtrl.cpp:399
 #: src/SharedFilesCtrl.cpp:143
 msgid "Low"
 msgstr "낮음"
 
-#: src/DataToText.cpp:43 src/DownloadListCtrl.cpp:899 src/muuli_wdr.cpp:2018
+#: src/DataToText.cpp:43 src/DownloadListCtrl.cpp:668 src/muuli_wdr.cpp:2018
 #: src/ServerListCtrl.cpp:237 src/ServerListCtrl.cpp:400
 #: src/SharedFilesCtrl.cpp:144
 msgid "Normal"
 msgstr "보통"
 
-#: src/DataToText.cpp:44 src/DownloadListCtrl.cpp:900 src/muuli_wdr.cpp:2019
+#: src/DataToText.cpp:44 src/DownloadListCtrl.cpp:669 src/muuli_wdr.cpp:2019
 #: src/ServerListCtrl.cpp:238 src/ServerListCtrl.cpp:401
 #: src/SharedFilesCtrl.cpp:145
 msgid "High"
@@ -1440,7 +1486,7 @@ msgstr "자료 핵"
 msgid "Search Result"
 msgstr ""
 
-#: src/DataToText.cpp:143 src/DownloadListCtrl.cpp:188
+#: src/DataToText.cpp:143 src/DownloadListCtrl.cpp:182
 #: src/OtherFunctions.cpp:629 src/TransferWnd.cpp:346
 msgid "Completed"
 msgstr "완료됨"
@@ -1465,7 +1511,7 @@ msgstr ""
 msgid "ERROR: Failed!"
 msgstr ""
 
-#: src/DataToText.cpp:149 src/SearchListCtrl.cpp:1032
+#: src/DataToText.cpp:149 src/SearchListCtrl.cpp:1053
 msgid "Queued"
 msgstr "대기열에 있음"
 
@@ -1477,199 +1523,178 @@ msgstr "이미 내려받는중"
 msgid "Unknown or bad tempfile format."
 msgstr "알수없거나 나쁜 임시 파일 형식입니다."
 
-#: src/DownloadListCtrl.cpp:184
+#: src/DownloadListCtrl.cpp:178
 msgid "Part"
 msgstr ""
 
-#: src/DownloadListCtrl.cpp:186 src/PartFileConvertDlg.cpp:95
+#: src/DownloadListCtrl.cpp:180 src/PartFileConvertDlg.cpp:95
 #: src/SearchListCtrl.cpp:88 src/SharedFilesCtrl.cpp:108
 msgid "Size"
 msgstr "크기"
 
-#: src/DownloadListCtrl.cpp:187 src/muuli_wdr.cpp:2816
+#: src/DownloadListCtrl.cpp:181 src/muuli_wdr.cpp:2816
 msgid "Transferred"
 msgstr "전송됨"
 
-#: src/DownloadListCtrl.cpp:189 src/SourceListCtrl.cpp:30
+#: src/DownloadListCtrl.cpp:183 src/SourceListCtrl.cpp:30
 msgid "Speed"
 msgstr "속도"
 
-#: src/DownloadListCtrl.cpp:190
+#: src/DownloadListCtrl.cpp:184
 msgid "Progress"
 msgstr "진척"
 
-#: src/DownloadListCtrl.cpp:191 src/FileDetailListCtrl.cpp:43
+#: src/DownloadListCtrl.cpp:185 src/FileDetailListCtrl.cpp:43
 #: src/PartFile.cpp:4328 src/SearchListCtrl.cpp:89
 msgid "Sources"
 msgstr "자료"
 
-#: src/DownloadListCtrl.cpp:192 src/DownloadListCtrl.cpp:903
+#: src/DownloadListCtrl.cpp:186 src/DownloadListCtrl.cpp:672
 #: src/ServerListCtrl.cpp:94 src/ServerListCtrl.cpp:403
 #: src/SharedFilesCtrl.cpp:110 src/SharedFilesCtrl.cpp:150
 msgid "Priority"
 msgstr "우선권"
 
-#: src/DownloadListCtrl.cpp:193 src/PartFile.cpp:4330 src/SearchListCtrl.cpp:92
+#: src/DownloadListCtrl.cpp:187 src/PartFile.cpp:4330 src/SearchListCtrl.cpp:92
 msgid "Status"
 msgstr "상태"
 
-#: src/DownloadListCtrl.cpp:194
+#: src/DownloadListCtrl.cpp:188
 msgid "Time Remaining"
 msgstr "남은 시간"
 
-#: src/DownloadListCtrl.cpp:195
+#: src/DownloadListCtrl.cpp:189
 msgid "Last Seen Complete"
 msgstr "최종 완료"
 
-#: src/DownloadListCtrl.cpp:196
+#: src/DownloadListCtrl.cpp:190
 msgid "Last Reception"
 msgstr "최종 받음"
 
-#: src/DownloadListCtrl.cpp:437
+#: src/DownloadListCtrl.cpp:431
 #, fuzzy
 msgid "Are you sure that you wish to delete the selected file?"
 msgstr "선택된파일을 지우시겠습니까?"
 
-#: src/DownloadListCtrl.cpp:439
+#: src/DownloadListCtrl.cpp:433
 #, fuzzy
 msgid "Are you sure that you wish to delete the selected files?"
 msgstr "선택된파일을 지우시겠습니까?"
 
-#: src/DownloadListCtrl.cpp:580 src/SharedFilesCtrl.cpp:214
+#: src/DownloadListCtrl.cpp:574 src/SharedFilesCtrl.cpp:215
 #, c-format
 msgid ""
 "Feedback from: %s (%s)\n"
 "\n"
 msgstr ""
 
-#: src/DownloadListCtrl.cpp:901 src/muuli_wdr.cpp:2020
+#: src/DownloadListCtrl.cpp:670 src/muuli_wdr.cpp:2020
 #: src/SharedFilesCtrl.cpp:148
 msgid "Auto"
 msgstr "자동"
 
-#: src/DownloadListCtrl.cpp:905 src/TransferWnd.cpp:376
+#: src/DownloadListCtrl.cpp:674 src/TransferWnd.cpp:376
 msgid "&Stop"
 msgstr "멈춤(&S)"
 
-#: src/DownloadListCtrl.cpp:906 src/TransferWnd.cpp:377
+#: src/DownloadListCtrl.cpp:675 src/TransferWnd.cpp:377
 msgid "&Pause"
 msgstr "중지(&P)"
 
-#: src/DownloadListCtrl.cpp:907 src/TransferWnd.cpp:378
+#: src/DownloadListCtrl.cpp:676 src/TransferWnd.cpp:378
 msgid "&Resume"
 msgstr "계속(&R)"
 
-#: src/DownloadListCtrl.cpp:908
+#: src/DownloadListCtrl.cpp:677
 msgid "C&lear completed"
 msgstr "완료된것 정리(&l)"
 
-#: src/DownloadListCtrl.cpp:914
+#: src/DownloadListCtrl.cpp:683
 msgid "Swap every A4AF to this file now"
 msgstr "모든 A4AF를 이 파일로 바꿈"
 
-#: src/DownloadListCtrl.cpp:916
+#: src/DownloadListCtrl.cpp:685
 msgid "Swap every A4AF to this file (Auto)"
 msgstr "모든 A4AF를 이 파일로 바꿈 (자동)"
 
-#: src/DownloadListCtrl.cpp:921
+#: src/DownloadListCtrl.cpp:690
 msgid "Swap every A4AF to any other file now"
 msgstr "모든 A4AF를 다른 파일로 바꿈"
 
-#: src/DownloadListCtrl.cpp:924
+#: src/DownloadListCtrl.cpp:693
 msgid "Extended Options"
 msgstr "확장 옵션"
 
-#: src/DownloadListCtrl.cpp:929 src/DownloadListCtrl.cpp:997
+#: src/DownloadListCtrl.cpp:698 src/DownloadListCtrl.cpp:760
 msgid "Preview"
 msgstr "미리보기"
 
-#: src/DownloadListCtrl.cpp:930
+#: src/DownloadListCtrl.cpp:699
 msgid "Show file &details"
 msgstr "파일 상세 보기(&d)"
 
-#: src/DownloadListCtrl.cpp:931 src/muuli_wdr.cpp:656
+#: src/DownloadListCtrl.cpp:700 src/muuli_wdr.cpp:656
 msgid "Show all comments"
 msgstr "모든 의견 보기"
 
-#: src/DownloadListCtrl.cpp:936
+#: src/DownloadListCtrl.cpp:705
 msgid "Copy magnet URI to clipboard"
 msgstr "magnet URI를 클립보드로 복사"
 
-#: src/DownloadListCtrl.cpp:938 src/SharedFilesCtrl.cpp:175
+#: src/DownloadListCtrl.cpp:707 src/SharedFilesCtrl.cpp:175
 msgid "Copy eD2k &link to clipboard"
 msgstr ""
 
-#: src/DownloadListCtrl.cpp:940 src/SharedFilesCtrl.cpp:182
+#: src/DownloadListCtrl.cpp:709 src/SharedFilesCtrl.cpp:182
 msgid "Copy feedback to clipboard"
 msgstr "반응을 클립보드에 복사"
 
-#: src/DownloadListCtrl.cpp:943
-msgid "Plain text"
-msgstr ""
-
-#: src/DownloadListCtrl.cpp:944
-msgid "CSV"
-msgstr ""
-
-#: src/DownloadListCtrl.cpp:945
-msgid "JSON"
-msgstr ""
-
-#: src/DownloadListCtrl.cpp:946
-msgid "HTML"
-msgstr ""
-
-#: src/DownloadListCtrl.cpp:948
-#, fuzzy
-msgid "Copy selection to clipboard"
-msgstr "반응을 클립보드에 복사"
-
-#: src/DownloadListCtrl.cpp:957
+#: src/DownloadListCtrl.cpp:720
 msgid "unassign"
 msgstr "할당되지않은"
 
-#: src/DownloadListCtrl.cpp:964
+#: src/DownloadListCtrl.cpp:727
 msgid "Assign to category"
 msgstr "분류로 할당"
 
-#: src/DownloadListCtrl.cpp:1000
+#: src/DownloadListCtrl.cpp:763
 msgid "&Open the file"
 msgstr "파일 열기(&O)"
 
-#: src/DownloadListCtrl.cpp:1079 src/SharedFilesCtrl.cpp:726
+#: src/DownloadListCtrl.cpp:835 src/SharedFilesCtrl.cpp:783
 msgid "Enter new name for this file:"
 msgstr "새이름 넣으세요:"
 
-#: src/DownloadListCtrl.cpp:1080 src/SharedFilesCtrl.cpp:727
+#: src/DownloadListCtrl.cpp:836 src/SharedFilesCtrl.cpp:784
 msgid "File rename"
 msgstr "파일 이름변경"
 
-#: src/DownloadListCtrl.cpp:1322 src/GenericClientListCtrl.cpp:924
+#: src/DownloadListCtrl.cpp:1078 src/GenericClientListCtrl.cpp:924
 #: src/GenericClientListCtrl.cpp:935
 #, fuzzy, c-format
 msgid "%.1f MB/s"
 msgstr "%.1f kB/s"
 
-#: src/DownloadListCtrl.cpp:1395 src/DownloadListCtrl.cpp:1406
+#: src/DownloadListCtrl.cpp:1151 src/DownloadListCtrl.cpp:1162
 msgid "%y/%m/%d %H:%M:%S"
 msgstr "%y/%m/%d %H:%M:%S"
 
-#: src/DownloadListCtrl.cpp:1574
+#: src/DownloadListCtrl.cpp:1351
 #, c-format
 msgid "Downloads (%i)"
 msgstr "내려받기 (%i)"
 
-#: src/DownloadListCtrl.cpp:1729
+#: src/DownloadListCtrl.cpp:1506
 msgid ""
 "To prevent this warning to show up in every preview,\n"
 "set your preferred video player in preferences (default is mplayer)."
 msgstr ""
 
-#: src/DownloadListCtrl.cpp:1730
+#: src/DownloadListCtrl.cpp:1507
 msgid "File preview"
 msgstr "미리보기"
 
-#: src/DownloadListCtrl.cpp:1778
+#: src/DownloadListCtrl.cpp:1555
 #, fuzzy, c-format
 msgid "ERROR: Failed to execute external media-player! Command: `%s'"
 msgstr "오류: 외부 재생기를 실행하지 못했습니다."
@@ -2510,6 +2535,11 @@ msgstr "초기적재에 유효하지 않은 포트"
 msgid "Please fill all fields required"
 msgstr "모든 항목을 채워주세요."
 
+#: src/KadDlg.cpp:193 src/PartFile.cpp:1032 src/PrefsUnifiedDlg.cpp:712
+#: src/PrefsUnifiedDlg.cpp:837 src/PrefsUnifiedDlg.cpp:980
+msgid "Message"
+msgstr "메시지"
+
 #: src/KadDlg.cpp:212
 msgid "Are you sure you want to download a new nodes.dat file?\n"
 msgstr "새로운 nodes.dat파일을 내려받으시겠습니까?\n"
@@ -2541,12 +2571,6 @@ msgstr "주소"
 #, fuzzy
 msgid "TCP port"
 msgstr "UPnP 포트"
-
-#: src/KadRoutingWnd.cpp:337 src/ServerListCtrl.cpp:97
-#: src/SharedFilePeersListCtrl.cpp:34 src/SourceListCtrl.cpp:33
-#: src/Statistics.cpp:1008
-msgid "Version"
-msgstr "버젼"
 
 #: src/KadRoutingWnd.cpp:338 src/muuli_wdr.cpp:198 src/SearchListCtrl.cpp:90
 #: src/SharedFilesCtrl.cpp:109
@@ -2759,9 +2783,30 @@ msgstr ""
 msgid "WARNING: "
 msgstr ""
 
-#: src/MuleListCtrl.cpp:495
+#: src/MuleListCtrl.cpp:502
 msgid "Auto-fit columns to window"
 msgstr ""
+
+#: src/MuleListCtrl.cpp:633
+msgid "Plain text"
+msgstr ""
+
+#: src/MuleListCtrl.cpp:634
+msgid "CSV"
+msgstr ""
+
+#: src/MuleListCtrl.cpp:635
+msgid "JSON"
+msgstr ""
+
+#: src/MuleListCtrl.cpp:636
+msgid "HTML"
+msgstr ""
+
+#: src/MuleListCtrl.cpp:638
+#, fuzzy
+msgid "Copy selection to clipboard"
+msgstr "반응을 클립보드에 복사"
 
 #: src/MuleNotebook.cpp:181 src/muuli_wdr.cpp:765 src/muuli_wdr.cpp:1181
 #: src/muuli_wdr.cpp:2704 src/muuli_wdr.cpp:2937
@@ -3185,7 +3230,7 @@ msgstr ""
 msgid "Stop"
 msgstr "멈춤"
 
-#: src/muuli_wdr.cpp:335 src/muuli_wdr.cpp:1318 src/SearchListCtrl.cpp:646
+#: src/muuli_wdr.cpp:335 src/muuli_wdr.cpp:1318 src/SearchListCtrl.cpp:666
 msgid "Download"
 msgstr "내려받기"
 
@@ -5056,7 +5101,7 @@ msgstr ""
 msgid "Insufficient disk space"
 msgstr ""
 
-#: src/PartFile.cpp:4328 src/SearchListCtrl.cpp:1027
+#: src/PartFile.cpp:4328 src/SearchListCtrl.cpp:1048
 #: src/SharedFilePeersListCtrl.cpp:29 src/SourceListCtrl.cpp:29
 msgid "Downloaded"
 msgstr ""
@@ -5470,14 +5515,6 @@ msgstr ""
 "적어도 한개의 유효한 server.met파일을 가르키는 URL을 적으세요.\n"
 "URL을 입력하려면 채크박스 옆의 \"목록\"버튼을 클릭하세요."
 
-#: src/PrefsUnifiedDlg.cpp:1120
-msgid "Temporary files"
-msgstr "임시 파일"
-
-#: src/PrefsUnifiedDlg.cpp:1125
-msgid "Incoming files"
-msgstr "내려받은 파일"
-
 #: src/PrefsUnifiedDlg.cpp:1130
 msgid "Online Signatures"
 msgstr "온라인 서명"
@@ -5654,7 +5691,7 @@ msgstr "최소 크기가 최대 크기보다 작아야 합니다. 최대 크기�
 msgid "Search warning"
 msgstr "검색 경고"
 
-#: src/SearchDlg.cpp:663 src/SearchListCtrl.cpp:649
+#: src/SearchDlg.cpp:663 src/SearchListCtrl.cpp:669
 msgid "Main"
 msgstr "주"
 
@@ -5678,33 +5715,33 @@ msgstr "Kad 검색 시도 중에 예기치 못한 에러: "
 msgid "FileID"
 msgstr "파일아이디"
 
-#: src/SearchListCtrl.cpp:655
+#: src/SearchListCtrl.cpp:675
 msgid "Download in category"
 msgstr "분류내 내려받기"
 
-#: src/SearchListCtrl.cpp:660
+#: src/SearchListCtrl.cpp:680
 #, fuzzy, c-format
 msgid "Get %s for this file"
 msgstr "이 파일의 추가주소를 더합니다."
 
-#: src/SearchListCtrl.cpp:664
+#: src/SearchListCtrl.cpp:684
 msgid "Search related files (eD2k, local server)"
 msgstr ""
 
-#: src/SearchListCtrl.cpp:669
+#: src/SearchListCtrl.cpp:689
 msgid "Mark as known file"
 msgstr ""
 
-#: src/SearchListCtrl.cpp:673 src/ServerListCtrl.cpp:427
+#: src/SearchListCtrl.cpp:693 src/ServerListCtrl.cpp:427
 msgid "Copy eD2k link to clipboard"
 msgstr ""
 
-#: src/SearchListCtrl.cpp:1035
+#: src/SearchListCtrl.cpp:1056
 #, fuzzy
 msgid "Canceled"
 msgstr "취소"
 
-#: src/SearchListCtrl.cpp:1038
+#: src/SearchListCtrl.cpp:1059
 msgid "New"
 msgstr ""
 
@@ -6377,25 +6414,25 @@ msgstr ""
 msgid "Copy eD2k link to clipboard (&AICH info + Source)"
 msgstr "ED2k 링크를 클립보드에 복사(&AICH info)"
 
-#: src/SharedFilesCtrl.cpp:329
+#: src/SharedFilesCtrl.cpp:330
 msgid "You need a HighID to create a valid sourcelink"
 msgstr "유효한 자료 링크를 만들기 위해서 높은아이디가 필요합니다."
 
-#: src/SharedFilesCtrl.cpp:503
+#: src/SharedFilesCtrl.cpp:504
 #, c-format
 msgid "Shared Files (%i)"
 msgstr "공유된 파일(%i)"
 
-#: src/SharedFilesCtrl.cpp:640 src/TextClient.cpp:925
+#: src/SharedFilesCtrl.cpp:673 src/TextClient.cpp:925
 msgid "[PartFile]"
 msgstr "[부분 파일]"
 
-#: src/SharedFilesCtrl.cpp:749
+#: src/SharedFilesCtrl.cpp:806
 #, fuzzy, c-format
 msgid "ERROR: The folder of '%s' does not exist."
 msgstr "외형 폴더 '%s'가 없습니다."
 
-#: src/SharedFilesCtrl.cpp:772
+#: src/SharedFilesCtrl.cpp:829
 #, fuzzy, c-format
 msgid "ERROR: Failed to open File Explorer! Command: `%s'"
 msgstr "오류: 외부 재생기를 실행하지 못했습니다."

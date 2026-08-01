@@ -28,9 +28,6 @@
 #include <protocol/ed2k/ClientSoftware.h>
 #include <common/MenuIDs.h>
 
-#include <wx/clipbrd.h>		// Needed for wxTheClipboard
-#include <wx/dataobj.h>		// Needed for wxTextDataObject, wxHTMLDataObject
-
 #include <common/Format.h>	// Needed for CFormat
 #include "amule.h"		// Needed for theApp
 #include "amuleDlg.h"		// Needed for CamuleDlg
@@ -154,9 +151,6 @@ wxBEGIN_EVENT_TABLE(CDownloadListCtrl, CMuleListCtrl)
 	EVT_MENU( MP_VIEWFILECOMMENTS,		CDownloadListCtrl::OnViewFileComments )
 
 	EVT_MENU( MP_WS,			CDownloadListCtrl::OnGetFeedback )
-
-	// The four MP_COPYSEL_* ids are contiguous by construction, see MenuIDs.h
-	EVT_MENU_RANGE( MP_COPYSEL_TEXT, MP_COPYSEL_HTML, CDownloadListCtrl::OnCopySelection )
 
 wxEND_EVENT_TABLE()
 
@@ -590,231 +584,6 @@ void CDownloadListCtrl::OnGetFeedback(wxCommandEvent& WXUNUSED(event))
 }
 
 
-/**
- * Helper-function: Quotes a single CSV field as per RFC 4180.
- *
- * Fields are only quoted when they have to be, which keeps the common case
- * (no separator, no quote, no newline) readable.
- */
-static wxString EscapeCsvField(const wxString& value)
-{
-	if (value.find_first_of(",\"\r\n") == wxString::npos) {
-		return value;
-	}
-
-	wxString escaped = value;
-	escaped.Replace("\"", "\"\"");
-
-	return "\"" + escaped + "\"";
-}
-
-
-/**
- * Helper-function: Escapes a string for use as a JSON string literal.
- *
- * The quotes themselves are not added here.
- */
-static wxString EscapeJsonString(const wxString& value)
-{
-	wxString result;
-	result.reserve(value.length());
-
-	for (wxString::const_iterator it = value.begin(); it != value.end(); ++it) {
-		const wxUniChar c = *it;
-
-		switch (c.GetValue()) {
-			case '"':	result += "\\\"";	break;
-			case '\\':	result += "\\\\";	break;
-			case '\b':	result += "\\b";	break;
-			case '\f':	result += "\\f";	break;
-			case '\n':	result += "\\n";	break;
-			case '\r':	result += "\\r";	break;
-			case '\t':	result += "\\t";	break;
-			default:
-				// Anything else below U+0020 has no short escape and
-				// is illegal unescaped, so spell it out. Everything
-				// from U+0020 up goes through as-is: the result is
-				// UTF-8 when it reaches the clipboard, which JSON
-				// allows.
-				if (c.GetValue() < 0x20) {
-					result += CFormat("\\u%04x") % c.GetValue();
-				} else {
-					result += c;
-				}
-		}
-	}
-
-	return result;
-}
-
-
-/**
- * Helper-function: Escapes a string for use as HTML text or attribute value.
- */
-static wxString EscapeHtmlText(const wxString& value)
-{
-	wxString result = value;
-
-	// Ampersand first, or it would escape the escapes.
-	result.Replace("&", "&amp;");
-	result.Replace("<", "&lt;");
-	result.Replace(">", "&gt;");
-	result.Replace("\"", "&quot;");
-
-	return result;
-}
-
-
-wxString CDownloadListCtrl::BuildSelectionText(ClipboardFormat format)
-{
-	ItemList files = ::GetSelectedItems( this );
-	if ( files.empty() ) {
-		return wxEmptyString;
-	}
-
-	// Column headers as the user sees them. Hidden columns are exported
-	// too: an export that silently loses fields depending on how the list
-	// happens to be configured is worse than a wide one.
-	std::vector<wxString> headers;
-	headers.reserve( ColumnNumberOfColumns );
-	for ( int i = 0; i < ColumnNumberOfColumns; ++i ) {
-		wxListItem listitem;
-		GetColumn( i, listitem );
-		headers.push_back( listitem.GetText() );
-	}
-
-	wxString out;
-
-	switch ( format ) {
-		case FormatPlainText:
-		case FormatCSV: {
-			const bool csv = ( format == FormatCSV );
-
-			for ( int i = 0; i < ColumnNumberOfColumns; ++i ) {
-				if ( i ) {
-					out += csv ? "," : "\t";
-				}
-				out += csv ? EscapeCsvField( headers[i] ) : headers[i];
-			}
-			out += "\n";
-
-			for ( ItemList::iterator it = files.begin(); it != files.end(); ++it ) {
-				const CPartFile* file = (*it)->GetFile();
-
-				for ( int i = 0; i < ColumnNumberOfColumns; ++i ) {
-					wxString text = GetCellText( file, i );
-
-					if ( i ) {
-						out += csv ? "," : "\t";
-					}
-
-					if ( csv ) {
-						out += EscapeCsvField( text );
-					} else {
-						// Plain text is tab separated, so a tab
-						// inside a value would shift every column
-						// after it.
-						text.Replace( "\t", " " );
-						out += text;
-					}
-				}
-				out += "\n";
-			}
-			break;
-		}
-
-		case FormatJSON: {
-			out += "[\n";
-
-			for ( ItemList::iterator it = files.begin(); it != files.end(); ++it ) {
-				const CPartFile* file = (*it)->GetFile();
-
-				out += "  {\n";
-				for ( int i = 0; i < ColumnNumberOfColumns; ++i ) {
-					out += CFormat("    \"%s\": \"%s\"")
-						% s_jsonColumnKeys[i]
-						% EscapeJsonString( GetCellText( file, i ) );
-					out += ( i + 1 < ColumnNumberOfColumns ) ? ",\n" : "\n";
-				}
-				out += "  }";
-
-				ItemList::iterator next = it;
-				out += ( ++next != files.end() ) ? ",\n" : "\n";
-			}
-
-			out += "]\n";
-			break;
-		}
-
-		case FormatHTML: {
-			out += "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">\n";
-			out += "<thead>\n<tr>";
-			for ( int i = 0; i < ColumnNumberOfColumns; ++i ) {
-				out += "<th>" + EscapeHtmlText( headers[i] ) + "</th>";
-			}
-			out += "</tr>\n</thead>\n<tbody>\n";
-
-			for ( ItemList::iterator it = files.begin(); it != files.end(); ++it ) {
-				const CPartFile* file = (*it)->GetFile();
-
-				out += "<tr>";
-				for ( int i = 0; i < ColumnNumberOfColumns; ++i ) {
-					out += "<td>" + EscapeHtmlText( GetCellText( file, i ) ) + "</td>";
-				}
-				out += "</tr>\n";
-			}
-
-			out += "</tbody>\n</table>\n";
-			break;
-		}
-	}
-
-	return out;
-}
-
-
-void CDownloadListCtrl::CopySelectionToClipboard(ClipboardFormat format)
-{
-	const wxString text = BuildSelectionText( format );
-	if ( text.IsEmpty() ) {
-		return;
-	}
-
-	if ( format != FormatHTML ) {
-		theApp->CopyTextToClipboard( text );
-		return;
-	}
-
-	// HTML goes on the clipboard twice: as the markup itself, so a text
-	// editor pastes the source, and as CF_HTML/text-html, so a word
-	// processor pastes a real table. The receiving application picks.
-	if ( wxTheClipboard->Open() ) {
-		wxTheClipboard->UsePrimarySelection(false);
-
-		wxDataObjectComposite* data = new wxDataObjectComposite();
-		data->Add( new wxTextDataObject( text ), true );
-		data->Add( new wxHTMLDataObject( text ) );
-
-		// SetData() takes ownership of data.
-		wxTheClipboard->SetData( data );
-		wxTheClipboard->Close();
-	}
-}
-
-
-void CDownloadListCtrl::OnCopySelection( wxCommandEvent& event )
-{
-	switch ( event.GetId() ) {
-		case MP_COPYSEL_TEXT:	CopySelectionToClipboard( FormatPlainText );	break;
-		case MP_COPYSEL_CSV:	CopySelectionToClipboard( FormatCSV );		break;
-		case MP_COPYSEL_JSON:	CopySelectionToClipboard( FormatJSON );		break;
-		case MP_COPYSEL_HTML:	CopySelectionToClipboard( FormatHTML );		break;
-		default:
-			wxFAIL;
-	}
-}
-
-
 void CDownloadListCtrl::OnViewFileInfo( wxCommandEvent& WXUNUSED(event) )
 {
 	long index = GetNextItem( -1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED );
@@ -939,13 +708,7 @@ void CDownloadListCtrl::OnMouseRightClick(wxListEvent& evt)
 	m_menu->Append(MP_WS,
 		_("Copy feedback to clipboard"));
 
-	wxMenu* copymenu = new wxMenu();
-	copymenu->Append(MP_COPYSEL_TEXT, _("Plain text"));
-	copymenu->Append(MP_COPYSEL_CSV, _("CSV"));
-	copymenu->Append(MP_COPYSEL_JSON, _("JSON"));
-	copymenu->Append(MP_COPYSEL_HTML, _("HTML"));
-	m_menu->Append(MP_MENU_COPYSEL,
-		_("Copy selection to clipboard"), copymenu);
+	AppendCopySelectionMenu(m_menu);
 	//-----------------------------------------------------
 	m_menu->AppendSeparator();
 	//-----------------------------------------------------
@@ -1061,13 +824,6 @@ void CDownloadListCtrl::OnKeyPressed( wxKeyEvent& event )
 			OnCancelFile( evt );
 			break;
 		}
-		// Ctrl+C: the same rows the context menu would copy, as plain
-		// text. wx reports the control modifier as a C0 control code
-		// in a char event, so there is no modifier to test here.
-		case WXK_CONTROL_C: {
-			CopySelectionToClipboard( FormatPlainText );
-			break;
-		}
 		case WXK_F2: {
 			ItemList files = ::GetSelectedItems( this );
 			if (files.size() == 1) {
@@ -1181,7 +937,7 @@ void CDownloadListCtrl::DrawFileItem( wxDC* dc, int nColumn, const wxRect& rect,
 		// Filename. Hand-drawn rather than left to the default branch
 		// because of the optional rating/comment icon in front of it.
 		case ColumnFileName: {
-			const wxString filename = GetCellText(file, ColumnFileName);
+			const wxString filename = GetFileCellText(file, ColumnFileName);
 
 			if (file->HasRating() || file->HasComment()) {
 				int image = Client_CommentOnly_Smiley;
@@ -1249,7 +1005,7 @@ void CDownloadListCtrl::DrawFileItem( wxDC* dc, int nColumn, const wxRect& rect,
 				if (thePrefs::ShowPercent()) {
 					// Percentage of completing or hashing
 					const uint16 hashingProgress = file->GetHashingProgress();
-					wxString buffer = GetCellText(file, ColumnProgress);
+					wxString buffer = GetFileCellText(file, ColumnProgress);
 					int middlex = (2*rect.GetX() + rect.GetWidth()) >> 1;
 					int middley = (2*rect.GetY() + rect.GetHeight()) >> 1;
 
@@ -1274,7 +1030,7 @@ void CDownloadListCtrl::DrawFileItem( wxDC* dc, int nColumn, const wxRect& rect,
 
 		// Every other column is plain text
 		default:
-			text = GetCellText(file, nColumn);
+			text = GetFileCellText(file, nColumn);
 	}
 
 	if ( !text.IsEmpty() ) {
@@ -1283,7 +1039,7 @@ void CDownloadListCtrl::DrawFileItem( wxDC* dc, int nColumn, const wxRect& rect,
 }
 
 
-wxString CDownloadListCtrl::GetCellText( const CPartFile* file, int column ) const
+wxString CDownloadListCtrl::GetFileCellText( const CPartFile* file, int column ) const
 {
 	wxString text;
 
@@ -1412,6 +1168,27 @@ wxString CDownloadListCtrl::GetCellText( const CPartFile* file, int column ) con
 
 	return text;
 }
+
+wxString CDownloadListCtrl::GetCellText( long row, int column ) const
+{
+	// The row does not carry its text -- it carries a pointer to the file
+	// it draws. Resolve it and ask the same function the painting uses.
+	const FileCtrlItem_Struct* item =
+		reinterpret_cast<FileCtrlItem_Struct*>(GetItemData(row));
+
+	return item ? GetFileCellText(item->GetFile(), column) : wxString();
+}
+
+
+wxString CDownloadListCtrl::GetColumnKey( int column ) const
+{
+	if (column < 0 || column >= ColumnNumberOfColumns) {
+		return CMuleListCtrl::GetColumnKey(column);
+	}
+
+	return wxString(s_jsonColumnKeys[column]);
+}
+
 
 wxString CDownloadListCtrl::GetTTSText(unsigned item) const
 {

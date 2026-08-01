@@ -37,6 +37,8 @@
 #include <list>
 #include "Types.h"
 
+class wxMenu;
+
 /**
  * Enhanced wxListCtrl provided custom-drawing among other things.
  *
@@ -227,7 +229,69 @@ public:
 	 */
 	bool IsSorting() const { return m_isSorting; }
 
+
+	//! Output formats understood by BuildSelectionText().
+	enum ClipboardFormat {
+		FormatPlainText,
+		FormatCSV,
+		FormatJSON,
+		FormatHTML
+	};
+
+	/**
+	 * Renders the selected rows in the specified format.
+	 *
+	 * @return The rendered text, or an empty string if nothing is selected.
+	 *
+	 * Rows come out in the order they are displayed, and every column is
+	 * included -- also the ones the user has hidden. An export that
+	 * silently drops fields depending on how the list happens to be
+	 * configured is worse than a wide one.
+	 */
+	wxString BuildSelectionText(ClipboardFormat format);
+
+	/**
+	 * Places the selected rows on the clipboard in the specified format.
+	 */
+	void CopySelectionToClipboard(ClipboardFormat format);
+
+	/**
+	 * Appends the "Copy selection to clipboard" submenu.
+	 *
+	 * The four ids are handled by this class, so a list only has to add
+	 * the submenu to its context menu to get the whole feature.
+	 */
+	void AppendCopySelectionMenu(wxMenu* menu);
+
 protected:
+
+	/**
+	 * Returns the textual contents of a single cell, for the export.
+	 *
+	 * The default reads the cell's own text, which is right for an
+	 * ordinary list. Owner-drawn lists store no text at all -- their
+	 * cells are painted from the object behind the row -- so they must
+	 * override this or export nothing but blanks.
+	 */
+	virtual wxString GetCellText(long row, int column) const;
+
+	/**
+	 * Returns the JSON key for a column.
+	 *
+	 * Deliberately not the column header: headers are translated, and a
+	 * language change must not rename the keys of a machine-readable
+	 * export. The default derives a key from the header anyway, as the
+	 * least bad fallback for lists that have not thought about it; any
+	 * list whose JSON output is meant to be consumed should override
+	 * this with a stable table.
+	 */
+	virtual wxString GetColumnKey(int column) const;
+
+	/**
+	 * Event handler for the copy-selection menu items.
+	 */
+	void OnCopySelection(wxCommandEvent& evt);
+
 
 	/**
 	 * Must be overwritten to enable alternate sorting.

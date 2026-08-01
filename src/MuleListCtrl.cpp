@@ -27,6 +27,10 @@
 #include <wx/fileconf.h>		// Needed for wxConfig
 #include <wx/tokenzr.h>			// Needed for wxStringTokenizer
 #include <wx/imaglist.h>		// Needed for wxImageList
+#include <wx/clipbrd.h>			// Needed for wxTheClipboard
+#include <wx/dataobj.h>			// Needed for wxTextDataObject, wxHTMLDataObject
+
+#include <common/Format.h>		// Needed for CFormat
 
 #include <common/MuleDebug.h>			// Needed for MULE_VALIDATE_
 #include <common/StringFunctions.h>		// Needed for StrToLong
@@ -61,6 +65,9 @@ wxBEGIN_EVENT_TABLE(CMuleListCtrl, MuleExtern::wxGenericListCtrl)
 	EVT_CHAR(						CMuleListCtrl::OnChar)
 	EVT_MENU_RANGE(MP_LISTCOL_1, MP_LISTCOL_15, CMuleListCtrl::OnMenuSelected)
 	EVT_MENU(MP_LISTCOL_AUTOSIZE,	CMuleListCtrl::OnToggleAutoSize)
+	// Contiguous by construction, see MenuIDs.h. Handled here so a list
+	// only has to call AppendCopySelectionMenu() to get the feature.
+	EVT_MENU_RANGE(MP_COPYSEL_TEXT, MP_COPYSEL_HTML, CMuleListCtrl::OnCopySelection)
 	EVT_SIZE(						CMuleListCtrl::OnListSize)
 	EVT_LIST_COL_END_DRAG(-1,		CMuleListCtrl::OnColumnEndDrag)
 	EVT_MOUSEWHEEL(CMuleListCtrl::OnMouseWheel)
@@ -499,6 +506,290 @@ void CMuleListCtrl::OnColumnRClick(wxListEvent& evt)
 }
 
 
+/**
+ * Helper-function: Quotes a single CSV field as per RFC 4180.
+ *
+ * Fields are only quoted when they have to be, which keeps the common case
+ * (no separator, no quote, no newline) readable.
+ */
+static wxString EscapeCsvField(const wxString& value)
+{
+	if (value.find_first_of(",\"\r\n") == wxString::npos) {
+		return value;
+	}
+
+	wxString escaped = value;
+	escaped.Replace("\"", "\"\"");
+
+	return "\"" + escaped + "\"";
+}
+
+
+/**
+ * Helper-function: Escapes a string for use as a JSON string literal.
+ *
+ * The quotes themselves are not added here.
+ */
+static wxString EscapeJsonString(const wxString& value)
+{
+	wxString result;
+	result.reserve(value.length());
+
+	for (wxString::const_iterator it = value.begin(); it != value.end(); ++it) {
+		const wxUniChar c = *it;
+
+		switch (c.GetValue()) {
+			case '"':	result += "\\\"";	break;
+			case '\\':	result += "\\\\";	break;
+			case '\b':	result += "\\b";	break;
+			case '\f':	result += "\\f";	break;
+			case '\n':	result += "\\n";	break;
+			case '\r':	result += "\\r";	break;
+			case '\t':	result += "\\t";	break;
+			default:
+				// Anything else below U+0020 has no short escape and
+				// is illegal unescaped, so spell it out. Everything
+				// from U+0020 up goes through as-is: the result is
+				// UTF-8 when it reaches the clipboard, which JSON
+				// allows.
+				if (c.GetValue() < 0x20) {
+					result += CFormat("\\u%04x") % c.GetValue();
+				} else {
+					result += c;
+				}
+		}
+	}
+
+	return result;
+}
+
+
+/**
+ * Helper-function: Escapes a string for use as HTML text or attribute value.
+ */
+static wxString EscapeHtmlText(const wxString& value)
+{
+	wxString result = value;
+
+	// Ampersand first, or it would escape the escapes.
+	result.Replace("&", "&amp;");
+	result.Replace("<", "&lt;");
+	result.Replace(">", "&gt;");
+	result.Replace("\"", "&quot;");
+
+	return result;
+}
+
+
+wxString CMuleListCtrl::GetCellText(long row, int column) const
+{
+	// Not GetItemText(): the generic control this derives from only has
+	// the single-argument form, which is column 0 and nothing else.
+	wxListItem item;
+	item.SetId(row);
+	item.SetColumn(column);
+	item.SetMask(wxLIST_MASK_TEXT);
+
+	if (!GetItem(item)) {
+		return wxEmptyString;
+	}
+
+	return item.GetText();
+}
+
+
+wxString CMuleListCtrl::GetColumnKey(int column) const
+{
+	wxListItem item;
+	GetColumn(column, item);
+
+	wxString key;
+	bool lastWasSeparator = false;
+	const wxString header = item.GetText();
+
+	for (wxString::const_iterator it = header.begin(); it != header.end(); ++it) {
+		const wxUniChar c = *it;
+
+		if (wxIsalnum(c)) {
+			key += wxTolower(c);
+			lastWasSeparator = false;
+		} else if (!key.IsEmpty() && !lastWasSeparator) {
+			key += "_";
+			lastWasSeparator = true;
+		}
+	}
+
+	while (key.EndsWith("_")) {
+		key.RemoveLast();
+	}
+
+	return key.IsEmpty() ? wxString(CFormat("column_%d") % column) : key;
+}
+
+
+void CMuleListCtrl::AppendCopySelectionMenu(wxMenu* menu)
+{
+	wxMenu* copymenu = new wxMenu();
+	copymenu->Append(MP_COPYSEL_TEXT, _("Plain text"));
+	copymenu->Append(MP_COPYSEL_CSV, _("CSV"));
+	copymenu->Append(MP_COPYSEL_JSON, _("JSON"));
+	copymenu->Append(MP_COPYSEL_HTML, _("HTML"));
+
+	menu->Append(MP_MENU_COPYSEL, _("Copy selection to clipboard"), copymenu);
+}
+
+
+wxString CMuleListCtrl::BuildSelectionText(ClipboardFormat format)
+{
+	std::vector<long> rows;
+	long row = GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	while (row != -1) {
+		rows.push_back(row);
+		row = GetNextItem(row, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	}
+
+	const int columns = GetColumnCount();
+	if (rows.empty() || columns <= 0) {
+		return wxEmptyString;
+	}
+
+	// Column headers as the user sees them, for the three human-facing
+	// formats. JSON uses GetColumnKey() instead -- see there.
+	std::vector<wxString> headers;
+	headers.reserve(columns);
+	for (int i = 0; i < columns; ++i) {
+		wxListItem item;
+		GetColumn(i, item);
+		headers.push_back(item.GetText());
+	}
+
+	wxString out;
+
+	switch (format) {
+		case FormatPlainText:
+		case FormatCSV: {
+			const bool csv = (format == FormatCSV);
+
+			for (int i = 0; i < columns; ++i) {
+				if (i) {
+					out += csv ? "," : "\t";
+				}
+				out += csv ? EscapeCsvField(headers[i]) : headers[i];
+			}
+			out += "\n";
+
+			for (std::vector<long>::const_iterator it = rows.begin(); it != rows.end(); ++it) {
+				for (int i = 0; i < columns; ++i) {
+					wxString text = GetCellText(*it, i);
+
+					if (i) {
+						out += csv ? "," : "\t";
+					}
+
+					if (csv) {
+						out += EscapeCsvField(text);
+					} else {
+						// Plain text is tab separated, so a tab
+						// inside a value would shift every column
+						// after it.
+						text.Replace("\t", " ");
+						out += text;
+					}
+				}
+				out += "\n";
+			}
+			break;
+		}
+
+		case FormatJSON: {
+			out += "[\n";
+
+			for (std::vector<long>::const_iterator it = rows.begin(); it != rows.end(); ++it) {
+				out += "  {\n";
+				for (int i = 0; i < columns; ++i) {
+					out += "    \"" + EscapeJsonString(GetColumnKey(i)) + "\": \""
+						+ EscapeJsonString(GetCellText(*it, i)) + "\"";
+					out += (i + 1 < columns) ? ",\n" : "\n";
+				}
+				out += "  }";
+
+				std::vector<long>::const_iterator next = it;
+				out += (++next != rows.end()) ? ",\n" : "\n";
+			}
+
+			out += "]\n";
+			break;
+		}
+
+		case FormatHTML: {
+			out += "<table border=\"1\" cellspacing=\"0\" cellpadding=\"4\">\n";
+			out += "<thead>\n<tr>";
+			for (int i = 0; i < columns; ++i) {
+				out += "<th>" + EscapeHtmlText(headers[i]) + "</th>";
+			}
+			out += "</tr>\n</thead>\n<tbody>\n";
+
+			for (std::vector<long>::const_iterator it = rows.begin(); it != rows.end(); ++it) {
+				out += "<tr>";
+				for (int i = 0; i < columns; ++i) {
+					out += "<td>" + EscapeHtmlText(GetCellText(*it, i)) + "</td>";
+				}
+				out += "</tr>\n";
+			}
+
+			out += "</tbody>\n</table>\n";
+			break;
+		}
+	}
+
+	return out;
+}
+
+
+void CMuleListCtrl::CopySelectionToClipboard(ClipboardFormat format)
+{
+	const wxString text = BuildSelectionText(format);
+	if (text.IsEmpty()) {
+		return;
+	}
+
+	if (!wxTheClipboard->Open()) {
+		return;
+	}
+
+	wxTheClipboard->UsePrimarySelection(false);
+
+	if (format == FormatHTML) {
+		// HTML goes on the clipboard twice: as the markup itself, so a
+		// text editor pastes the source, and as CF_HTML/text-html, so a
+		// word processor pastes a real table. The receiver picks.
+		wxDataObjectComposite* data = new wxDataObjectComposite();
+		data->Add(new wxTextDataObject(text), true);
+		data->Add(new wxHTMLDataObject(text));
+
+		// SetData() takes ownership of data.
+		wxTheClipboard->SetData(data);
+	} else {
+		wxTheClipboard->SetData(new wxTextDataObject(text));
+	}
+
+	wxTheClipboard->Close();
+}
+
+
+void CMuleListCtrl::OnCopySelection(wxCommandEvent& evt)
+{
+	switch (evt.GetId()) {
+		case MP_COPYSEL_TEXT:	CopySelectionToClipboard(FormatPlainText);	break;
+		case MP_COPYSEL_CSV:	CopySelectionToClipboard(FormatCSV);		break;
+		case MP_COPYSEL_JSON:	CopySelectionToClipboard(FormatJSON);		break;
+		case MP_COPYSEL_HTML:	CopySelectionToClipboard(FormatHTML);		break;
+		default:
+			wxFAIL;
+	}
+}
+
+
 void CMuleListCtrl::OnToggleAutoSize(wxCommandEvent& evt)
 {
 	m_autoSizeColumns = evt.IsChecked();
@@ -787,13 +1078,19 @@ void CMuleListCtrl::OnChar(wxKeyEvent& evt)
 	}
 
 	uint64 now = GetTickCount64();
-	// We wish to avoid handling shortcuts, with the exception of 'select-all'.
+	// We wish to avoid handling shortcuts, with the exception of
+	// 'select-all' and 'copy'.
 	if (evt.AltDown() || evt.ControlDown() || evt.MetaDown()) {
 		if (evt.CmdDown() && (evt.GetKeyCode() == 0x01)) {
 			// Ctrl+a (Command+a on Mac) was pressed, select all items
 			for (int i = 0; i < GetItemCount(); ++i) {
 				SetItemState(i, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 			}
+		} else if (evt.CmdDown() && (evt.GetKeyCode() == WXK_CONTROL_C)) {
+			// Ctrl+c: the same rows the context menu would copy, as
+			// plain text. wx reports the modifier as a C0 control
+			// code in a char event, so there is nothing else to test.
+			CopySelectionToClipboard(FormatPlainText);
 		}
 
 		evt.Skip();

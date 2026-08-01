@@ -630,6 +630,26 @@ void CSearchListCtrl::SyncOtherLists(CSearchListCtrl *src)
 }
 
 
+wxString CSearchListCtrl::GetColumnKey( int column ) const
+{
+	// Stable, untranslated keys for the JSON export -- see
+	// CMuleListCtrl::GetColumnKey. The cells of this list do hold their
+	// own text, so the default GetCellText() is right and only the keys
+	// need saying.
+	switch ( column ) {
+		case ID_SEARCH_COL_NAME:	return "name";
+		case ID_SEARCH_COL_SIZE:	return "size";
+		case ID_SEARCH_COL_SOURCES:	return "sources";
+		case ID_SEARCH_COL_TYPE:	return "type";
+		case ID_SEARCH_COL_FILEID:	return "file_id";
+		case ID_SEARCH_COL_STATUS:	return "status";
+		case ID_SEARCH_COL_DIRECTORY:	return "directory";
+	}
+
+	return CMuleListCtrl::GetColumnKey(column);
+}
+
+
 void CSearchListCtrl::OnRightClick(wxListEvent& event)
 {
 	CheckSelection(event);
@@ -671,6 +691,7 @@ void CSearchListCtrl::OnRightClick(wxListEvent& event)
 #endif
 
 		menu.Append(MP_GETED2KLINK, _("Copy eD2k link to clipboard"));
+		AppendCopySelectionMenu(&menu);
 
 		// These should only be enabled for single-selections
 		bool enable = (GetSelectedItemCount() == 1);

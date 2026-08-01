@@ -180,6 +180,7 @@ void CSharedFilesCtrl::OnRightClick(wxListEvent& event)
 		m_menu->Append(MP_GETAICHED2KLINK,_("Copy eD2k link to clipboard (&AICH info)"));
 		m_menu->Append(MP_GETAICHED2KLINKSRC,_("Copy eD2k link to clipboard (&AICH info + Source)"));
 		m_menu->Append(MP_WS,_("Copy feedback to clipboard"));
+		AppendCopySelectionMenu(m_menu);
 
 		m_menu->Enable(MP_GETAICHED2KLINK, file->HasProperAICHHashSet());
 		m_menu->Enable(MP_GETAICHED2KLINKSRC, file->HasProperAICHHashSet());
@@ -551,8 +552,11 @@ void CSharedFilesCtrl::OnDrawItem( int item, wxDC* dc, const wxRect& rect, const
 
 			wxString textBuffer;
 			switch ( i ) {
+				// Two columns are hand-drawn: the name because of
+				// the optional rating/comment icon in front of it,
+				// the availability because it is a bar, not text.
 				case ID_SHARED_COL_NAME:
-					textBuffer = file->GetFileName().GetPrintable();
+					textBuffer = GetFileCellText(file, i);
 
 					if (file->GetFileRating() || file->GetFileComment().Length()) {
 						int image = Client_CommentOnly_Smiley;
@@ -574,43 +578,6 @@ void CSharedFilesCtrl::OnDrawItem( int item, wxDC* dc, const wxRect& rect, const
 
 					break;
 
-				case ID_SHARED_COL_SIZE:
-					textBuffer = CastItoXBytes(file->GetFileSize());
-					break;
-
-				case ID_SHARED_COL_TYPE:
-					textBuffer = GetFiletypeByName(file->GetFileName());
-					break;
-
-				case ID_SHARED_COL_PRIO:
-					textBuffer = PriorityToStr(file->GetUpPriority(), file->IsAutoUpPriority());
-					break;
-
-				case ID_SHARED_COL_ID:
-					textBuffer = file->GetFileHash().Encode();
-					break;
-
-				case ID_SHARED_COL_REQ:
-					textBuffer = CFormat("%u (%u)")
-							% file->statistic.GetRequests()
-							% file->statistic.GetAllTimeRequests();
-					break;
-
-				case ID_SHARED_COL_AREQ:
-					textBuffer = CFormat("%u (%u)")
-							% file->statistic.GetAccepts()
-							% file->statistic.GetAllTimeAccepts();
-					break;
-
-				case ID_SHARED_COL_TRA:
-					textBuffer = CastItoXBytes(file->statistic.GetTransferred())
-						+ " (" + CastItoXBytes(file->statistic.GetAllTimeTransferred()) + ")";
-					break;
-
-				case ID_SHARED_COL_RTIO:
-					textBuffer = CFormat("%.2f") %	((double)file->statistic.GetAllTimeTransferred() / file->GetFileSize());
-					break;
-
 				case ID_SHARED_COL_PART:
 					if ( file->GetPartCount() ) {
 						wxRect barRect(columnRect.x, columnRect. y + 1,
@@ -620,27 +587,8 @@ void CSharedFilesCtrl::OnDrawItem( int item, wxDC* dc, const wxRect& rect, const
 					}
 					break;
 
-				case ID_SHARED_COL_CMPL:
-					if ( file->m_nCompleteSourcesCountLo == 0 ) {
-						if ( file->m_nCompleteSourcesCountHi ) {
-							textBuffer = CFormat("< %u") % file->m_nCompleteSourcesCountHi;
-						} else {
-							textBuffer = "0";
-						}
-					} else if (file->m_nCompleteSourcesCountLo == file->m_nCompleteSourcesCountHi) {
-						textBuffer = CFormat("%u") % file->m_nCompleteSourcesCountLo;
-					} else {
-						textBuffer = CFormat("%u - %u") % file->m_nCompleteSourcesCountLo % file->m_nCompleteSourcesCountHi;
-					}
-
-					break;
-
-				case ID_SHARED_COL_PATH:
-					if ( file->IsPartFile() ) {
-						textBuffer = _("[PartFile]");
-					} else {
-						textBuffer = file->GetFilePath().GetPrintable();
-					}
+				default:
+					textBuffer = GetFileCellText(file, i);
 			}
 
 			if (!textBuffer.IsEmpty()) {
@@ -651,6 +599,115 @@ void CSharedFilesCtrl::OnDrawItem( int item, wxDC* dc, const wxRect& rect, const
 		// Move to the next column
 		columnLeft += columnWidth;
 	}
+}
+
+
+wxString CSharedFilesCtrl::GetFileCellText( const CKnownFile* file, int column ) const
+{
+	wxString textBuffer;
+
+	switch ( column ) {
+		case ID_SHARED_COL_NAME:
+			textBuffer = file->GetFileName().GetPrintable();
+			break;
+
+		case ID_SHARED_COL_SIZE:
+			textBuffer = CastItoXBytes(file->GetFileSize());
+			break;
+
+		case ID_SHARED_COL_TYPE:
+			textBuffer = GetFiletypeByName(file->GetFileName());
+			break;
+
+		case ID_SHARED_COL_PRIO:
+			textBuffer = PriorityToStr(file->GetUpPriority(), file->IsAutoUpPriority());
+			break;
+
+		case ID_SHARED_COL_ID:
+			textBuffer = file->GetFileHash().Encode();
+			break;
+
+		case ID_SHARED_COL_REQ:
+			textBuffer = CFormat("%u (%u)")
+					% file->statistic.GetRequests()
+					% file->statistic.GetAllTimeRequests();
+			break;
+
+		case ID_SHARED_COL_AREQ:
+			textBuffer = CFormat("%u (%u)")
+					% file->statistic.GetAccepts()
+					% file->statistic.GetAllTimeAccepts();
+			break;
+
+		case ID_SHARED_COL_TRA:
+			textBuffer = CastItoXBytes(file->statistic.GetTransferred())
+				+ " (" + CastItoXBytes(file->statistic.GetAllTimeTransferred()) + ")";
+			break;
+
+		case ID_SHARED_COL_RTIO:
+			textBuffer = CFormat("%.2f") %	((double)file->statistic.GetAllTimeTransferred() / file->GetFileSize());
+			break;
+
+		// The availability bar has no text on screen; the export gets
+		// the number behind it rather than an empty cell.
+		case ID_SHARED_COL_PART:
+			textBuffer = CFormat("%u") % file->GetPartCount();
+			break;
+
+		case ID_SHARED_COL_CMPL:
+			if ( file->m_nCompleteSourcesCountLo == 0 ) {
+				if ( file->m_nCompleteSourcesCountHi ) {
+					textBuffer = CFormat("< %u") % file->m_nCompleteSourcesCountHi;
+				} else {
+					textBuffer = "0";
+				}
+			} else if (file->m_nCompleteSourcesCountLo == file->m_nCompleteSourcesCountHi) {
+				textBuffer = CFormat("%u") % file->m_nCompleteSourcesCountLo;
+			} else {
+				textBuffer = CFormat("%u - %u") % file->m_nCompleteSourcesCountLo % file->m_nCompleteSourcesCountHi;
+			}
+			break;
+
+		case ID_SHARED_COL_PATH:
+			if ( file->IsPartFile() ) {
+				textBuffer = _("[PartFile]");
+			} else {
+				textBuffer = file->GetFilePath().GetPrintable();
+			}
+	}
+
+	return textBuffer;
+}
+
+
+wxString CSharedFilesCtrl::GetCellText( long row, int column ) const
+{
+	const CKnownFile* file = reinterpret_cast<CKnownFile*>(GetItemData(row));
+
+	return file ? GetFileCellText(file, column) : wxString();
+}
+
+
+wxString CSharedFilesCtrl::GetColumnKey( int column ) const
+{
+	// Stable, untranslated keys for the JSON export -- see
+	// CMuleListCtrl::GetColumnKey.
+	switch ( column ) {
+		case ID_SHARED_COL_NAME:	return "name";
+		case ID_SHARED_COL_SIZE:	return "size";
+		case ID_SHARED_COL_TYPE:	return "type";
+		case ID_SHARED_COL_PRIO:	return "priority";
+		case ID_SHARED_COL_ID:		return "file_id";
+		case ID_SHARED_COL_REQ:		return "requests";
+		case ID_SHARED_COL_AREQ:	return "accepted_requests";
+		case ID_SHARED_COL_TRA:		return "transferred";
+		case ID_SHARED_COL_RTIO:	return "share_ratio";
+		case ID_SHARED_COL_PART:	return "parts";
+		case ID_SHARED_COL_CMPL:	return "complete_sources";
+		case ID_SHARED_COL_PATH:	return "directory";
+	}
+
+	return CMuleListCtrl::GetColumnKey(column);
 }
 
 

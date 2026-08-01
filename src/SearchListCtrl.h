@@ -207,6 +207,9 @@ protected:
 	/** @see CMuleListCtrl::GetTTSText */
 	virtual wxString GetTTSText(unsigned item) const;
 
+	/** @see CMuleListCtrl::GetColumnKey */
+	virtual wxString GetColumnKey(int column) const;
+
 	/**
 	 * Helper function which syncs two lists.
 	 *

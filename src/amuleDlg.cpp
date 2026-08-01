@@ -39,6 +39,9 @@
 #include <wx/sysopt.h>
 #include <wx/wupdlock.h>			// Needed for wxWindowUpdateLocker
 #include <wx/utils.h>				// Needed for wxFindWindowAtPoint
+#include <wx/versioninfo.h>			// Needed for wxGetLibraryVersionInfo
+
+#include <zlib.h>				// Needed for ZLIB_VERSION
 
 #include <common/EventIDs.h>
 
@@ -772,6 +775,80 @@ void CamuleDlg::OnToolBarButton(wxCommandEvent& ev)
 }
 
 
+// The About box used to be a wxMessageBox: its text could not be selected,
+// let alone copied. A version banner nobody can paste into a bug report is
+// decoration, so this is a real dialog -- read-only, selectable, with a
+// Copy button that takes the whole thing.
+namespace {
+
+class CAboutDialog : public wxDialog
+{
+public:
+	CAboutDialog(wxWindow* parent, const wxString& text)
+		: wxDialog(parent, wxID_ANY, _("About aMule"), wxDefaultPosition,
+			wxSize(580, 460), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+	{
+		wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+
+		// wxTE_DONTWRAP: the build block is a table of aligned
+		// "label: value" lines, and wrapping it turns it into soup.
+		wxTextCtrl* body = new wxTextCtrl(this, wxID_ANY, text,
+			wxDefaultPosition, wxDefaultSize,
+			wxTE_MULTILINE | wxTE_READONLY | wxTE_DONTWRAP);
+		sizer->Add(body, 1, wxALL | wxEXPAND, 8);
+
+		wxBoxSizer* buttons = new wxBoxSizer(wxHORIZONTAL);
+		wxButton* copy = new wxButton(this, wxID_COPY);
+		buttons->Add(copy, 0, wxRIGHT, 8);
+		buttons->AddStretchSpacer();
+		buttons->Add(new wxButton(this, wxID_OK), 0);
+		sizer->Add(buttons, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 8);
+
+		SetSizer(sizer);
+
+		copy->Bind(wxEVT_BUTTON, [text](wxCommandEvent& WXUNUSED(evt)) {
+			theApp->CopyTextToClipboard(text);
+		});
+	}
+};
+
+} // namespace
+
+
+wxString CamuleDlg::GetBuildInfo() const
+{
+	wxString info;
+
+	// GetMuleVersion() already spells out the fork tag, the wx toolkit
+	// and its compile-time version, Boost, and the snapshot date -- the
+	// one string the startup banner and --version have always printed.
+	info << _("Version") << ":\n";
+	info << "  " << theApp->GetFullMuleVersion() << "\n";
+
+	// Compile-time versus run-time wx. These two diverge more often than
+	// anyone expects -- a system upgrade is enough -- and the mismatch
+	// explains bugs that look impossible from the source alone.
+	info << "  wxWidgets: " << wxVERSION_STRING
+		<< " (" << _("built against") << "), "
+		<< wxGetLibraryVersionInfo().GetVersionString() << " (" << _("running") << ")\n";
+
+#ifdef __VERSION__
+	info << "  " << _("Compiler") << ": " << __VERSION__ << "\n";
+#endif
+	info << "  zlib: " << ZLIB_VERSION << "\n";
+	info << "  " << _("Built") << ": " << __DATE__ << " " << __TIME__ << "\n";
+
+	info << "\n" << _("Paths") << ":\n";
+	info << "  " << _("Configuration") << ": " << thePrefs::GetConfigDir() << "\n";
+	info << "  " << _("Temporary files") << ": " << thePrefs::GetTempDir().GetPrintable() << "\n";
+	info << "  " << _("Incoming files") << ": " << thePrefs::GetIncomingDir().GetPrintable() << "\n";
+
+	info << "\n  " << _("Operating system") << ": " << wxGetOsDescription() << "\n";
+
+	return info;
+}
+
+
 void CamuleDlg::OnAboutButton(wxCommandEvent& WXUNUSED(ev))
 {
 	wxString msg = " ";
@@ -796,11 +873,13 @@ void CamuleDlg::OnAboutButton(wxCommandEvent& WXUNUSED(ev))
 		_("Copyright (c) 2003-2026 aMule Team \n\n") <<
 		_("Part of aMule is based on \n") <<
 		_("Kademlia: Peer-to-peer routing based on the XOR metric.\n") <<
-                _(" Copyright (c) 2002-2011 Petar Maymounkov ( petar@maymounkov.org )\n") <<
+		_(" Copyright (c) 2002-2011 Petar Maymounkov ( petar@maymounkov.org )\n") <<
 		_("https://pdos.csail.mit.edu/~petar/papers/maymounkov-kademlia-lncs.pdf\n");
 
+	msg << "\n" << GetBuildInfo();
+
 	if (m_is_safe_state) {
-		wxMessageBox(msg, _("Message"), wxOK | wxICON_INFORMATION, this);
+		CAboutDialog(this, msg).ShowModal();
 	}
 }
 

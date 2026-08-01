@@ -124,6 +124,24 @@ private:
 	void	DrawAvailabilityBar( CKnownFile* file, wxDC* dc, const wxRect& rect ) const;
 
 	/**
+	 * Returns the textual contents of a single cell.
+	 *
+	 * This list is owner-drawn, so its cells hold no text: this is where
+	 * a row becomes strings, for the painting and for the export alike.
+	 */
+	wxString GetFileCellText( const CKnownFile* file, int column ) const;
+
+	/**
+	 * @see CMuleListCtrl::GetCellText
+	 */
+	virtual wxString GetCellText( long row, int column ) const;
+
+	/**
+	 * @see CMuleListCtrl::GetColumnKey
+	 */
+	virtual wxString GetColumnKey( int column ) const;
+
+	/**
 	 * Overloaded function needed to do custom drawing of the items.
 	 */
 	virtual void OnDrawItem(int item, wxDC* dc, const wxRect& rect, const wxRect& rectHL, bool highlighted);

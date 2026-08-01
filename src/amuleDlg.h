@@ -225,6 +225,14 @@ protected:
 	void OnViewPane(wxCommandEvent& ev);
 	void OnResetLayout(wxCommandEvent& ev);
 	void OnAboutButton(wxCommandEvent& ev);
+
+	/**
+	 * The build's own description: versions, paths, host.
+	 *
+	 * Shown in the About box, where it can be selected and copied, so a
+	 * bug report can carry it without anyone having to ask.
+	 */
+	wxString GetBuildInfo() const;
 	void OnPrefButton(wxCommandEvent& ev);
 	void OnImportButton(wxCommandEvent& ev);
 	void OnMinimize(wxIconizeEvent& evt);
