@@ -16,6 +16,32 @@ date of the version bump commit.
 
 ## Unreleased
 
+> The colour scheme below is in but not yet tested beyond a first look —
+> treat it as provisional until it has had some use.
+
+### Added
+- **A light / dark / system colour scheme**, in Preferences → Interface.
+  Defaults to System, which is also what a config file written before the
+  option existed reads back as. The dark values are the canonical Qt Fusion
+  ones. Lists, column headers, panels, graphs, the AUI pane chrome and the
+  Windows title bar all follow it; **menus, combo dropdowns, checkbox glyphs
+  and native scrollbars do not** — those are drawn by the OS theme and
+  wxWidgets 3.2 has no hook to override them. wx 3.3 adds one
+  (`MSWEnableDarkMode`), and when it reaches a stable series it goes behind a
+  version guard driven by this same option. Changing the scheme asks for a
+  restart. (`d59c178`)
+- **Banded list rows** on every owner-drawn list, and **status-coloured text**
+  in the download list — green only when data is actually arriving, not when a
+  file is merely queued. (`d59c178`)
+
+### Fixed
+- **The preferences dialog was cramped in two ways**: every row sat against the
+  next one, and the dialog opened at exactly the size its tightest page
+  demanded. Rows now get a 6 DIP gap and pages 8 DIP of padding, applied by
+  walking each page's sizer tree rather than by editing fifteen layout
+  functions in a file shared with upstream. The dialog opens at 1000×660 DIP,
+  floored by what the widest page needs and capped by the screen. (`3ee602e`)
+
 ### Changed
 - **UPnP is off by default and no longer built.** `ENABLE_UPNP` now defaults to
   `OFF`, and no build driver, packaging script or CI job turns it back on;
