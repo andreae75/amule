@@ -2,7 +2,13 @@
 
 Every version of the fork, newest first. Only what this fork changed on top of
 the upstream tree; upstream aMule's own history is in
-[`docs/CHANGELOG.md`](docs/CHANGELOG.md).
+[`docs/CHANGELOG.md`](docs/CHANGELOG.md), which is theirs and not ours to edit.
+
+**The filename is deliberate — don't rename this to `CHANGELOG.md`.** Upstream
+keeps its changelog at `docs/CHANGELOG.md` today, but the root `CHANGELOG.md` is
+precisely the path it would take if it ever promoted that file, and a merge
+conflict in a file that is 100% fork-owned is pure noise. A name upstream will
+never pick can never collide on a sync.
 
 The fork version (`AMULE_FORK_VERSION`) is display-only and never goes out on
 the network — see [Network identity](README.md#network-identity). Dates are the

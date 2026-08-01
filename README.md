@@ -19,7 +19,7 @@ The fork tag exists only where a human reads it.
 
 Everything in this table is on top of the upstream tree this fork started from.
 Nothing here changes the eD2k or Kad protocols. Version by version, with dates:
-[`CHANGELOG.md`](CHANGELOG.md).
+[`CHANGELOG-NeRvOuX.md`](CHANGELOG-NeRvOuX.md).
 
 | Area | Change | Why it matters | Commit |
 | :-- | :-- | :-- | :-- |
