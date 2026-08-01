@@ -33,6 +33,7 @@
 
 
 #include "Types.h"			// Needed for int32, uint16 and uint64
+#include "KadRoutingSnapshot.h"		// Needed for KadRoutingSnapshot
 #include <map>
 #ifndef __WINDOWS__
 	#include <signal.h>
@@ -252,6 +253,11 @@ public:
 	uint32	GetBuddyPort() const;
 	// Kad ID
 	const Kademlia::CUInt128& GetKadID() const;
+	// A copy of the Kad routing table, for display. False when Kad is
+	// not running, in which case the snapshot is left empty. The remote
+	// GUI has the same call and always answers false -- EC does not
+	// carry the routing table.
+	bool GetKadRoutingSnapshot(KadRoutingSnapshot& snapshot) const;
 
 	// Check if we should callback this client
 	bool CanDoCallback(uint32 clientServerIP, uint16 clientServerPort);

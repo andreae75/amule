@@ -799,6 +799,14 @@ public:
 	uint32 GetKadIndexedNotes() const	{ return theStats::GetKadIndexedNotes(); }
 	uint32 GetKadIndexedLoad() const	{ return theStats::GetKadIndexedLoad(); }
 	const CUInt128&	GetKadID() const	{ return m_kadID; }
+	// The routing table is not carried over EC, and this build has no
+	// Kad of its own: there is nothing to show, and saying so is the
+	// point -- an empty table would read as "Kad knows nobody".
+	bool GetKadRoutingSnapshot(KadRoutingSnapshot& snapshot) const
+	{
+		snapshot = KadRoutingSnapshot();
+		return false;
+	}
 	// True IP of machine
 	uint32 GetKadIPAddress() const		{ return theStats::GetKadIPAddress(); }
 	// Buddy status

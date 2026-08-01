@@ -52,6 +52,7 @@
 #include "DownloadListCtrl.h"			// Needed for CDownloadListCtrl
 #include "DownloadQueue.h"			// Needed for CDownloadQueue
 #include "KadDlg.h"				// Needed for CKadDlg
+#include "KadRoutingWnd.h"			// Needed for CKadRoutingWnd
 #include "Logger.h"
 #include "MuleTrayIcon.h"
 #include "muuli_wdr.h"				// Needed for ID_BUTTON*
@@ -279,6 +280,7 @@ m_clientSkinNames(CLIENT_SKIN_SIZE)
 	// Not a pane: the Kad view is a page of the networks notebook that
 	// muleDlg() builds inside CServerWnd, not a sibling view.
 	m_kademliawnd = CastChild("kadWnd", CKadDlg);
+	m_kadroutingwnd = new CKadRoutingWnd(m_auiHost);
 
 	// No Show(false) juggling any more -- pane visibility is the
 	// manager's business from here on.
@@ -405,6 +407,7 @@ const wxString CamuleDlg::PaneName(DialogType type)
 		case DT_SHARED_WND:	return wxT("shared");
 		case DT_CHAT_WND:	return wxT("messages");
 		case DT_STATS_WND:	return wxT("statistics");
+		case DT_KADROUTING_WND:	return wxT("kadrouting");
 		case DT_KAD_WND:	break;	// no pane
 	}
 	return wxEmptyString;
@@ -420,6 +423,7 @@ const wxString CamuleDlg::PaneCaption(DialogType type)
 		case DT_SHARED_WND:	return _("Shared Files");
 		case DT_CHAT_WND:	return _("Messages");
 		case DT_STATS_WND:	return _("Statistics");
+		case DT_KADROUTING_WND:	return _("Kad Routing Table");
 		case DT_KAD_WND:	break;	// no pane
 	}
 	return wxEmptyString;
@@ -435,6 +439,7 @@ wxWindow* CamuleDlg::PaneWindow(DialogType type) const
 		case DT_SHARED_WND:	return m_sharedfileswnd;
 		case DT_CHAT_WND:	return m_chatwnd;
 		case DT_STATS_WND:	return m_statisticswnd;
+		case DT_KADROUTING_WND:	return m_kadroutingwnd;
 		case DT_KAD_WND:	break;	// lives in the networks notebook
 	}
 	return NULL;
@@ -465,6 +470,7 @@ void CamuleDlg::CreateAuiPanes()
 		{ DT_SHARED_WND,   wxAUI_DOCK_BOTTOM },
 		{ DT_CHAT_WND,     wxAUI_DOCK_RIGHT  },
 		{ DT_STATS_WND,    wxAUI_DOCK_RIGHT  },
+		{ DT_KADROUTING_WND, wxAUI_DOCK_BOTTOM },
 	};
 
 	// Generous default extents: these views are all wide tables, and a
@@ -501,7 +507,10 @@ void CamuleDlg::CreateViewMenu()
 {
 	wxMenu* viewMenu = new wxMenu;
 
-	for (int t = DT_TRANSFER_WND; t <= DT_STATS_WND; ++t) {
+	// Runs to the last DialogType rather than to a hand-picked one: the
+	// types that have no pane are skipped just below, so adding a view
+	// never means remembering to move this bound.
+	for (int t = DT_TRANSFER_WND; t <= DT_KADROUTING_WND; ++t) {
 		const DialogType type = static_cast<DialogType>(t);
 		if (!PaneWindow(type)) {
 			continue;
@@ -527,7 +536,7 @@ void CamuleDlg::SyncViewMenu()
 		return;
 	}
 
-	for (int t = DT_TRANSFER_WND; t <= DT_STATS_WND; ++t) {
+	for (int t = DT_TRANSFER_WND; t <= DT_KADROUTING_WND; ++t) {
 		const DialogType type = static_cast<DialogType>(t);
 		wxWindow* win = PaneWindow(type);
 		if (!win) {
@@ -551,7 +560,7 @@ void CamuleDlg::SyncViewMenu()
 void CamuleDlg::OnViewPane(wxCommandEvent& ev)
 {
 	const int t = ev.GetId() - MP_VIEW_PANE_FIRST;
-	if (t < DT_TRANSFER_WND || t > DT_STATS_WND) {
+	if (t < DT_TRANSFER_WND || t > DT_KADROUTING_WND) {
 		return;
 	}
 
@@ -568,6 +577,12 @@ void CamuleDlg::OnViewPane(wxCommandEvent& ev)
 	pane.Show(ev.IsChecked());
 	m_auiMgr.Update();
 	SyncViewMenu();
+
+	// The routing table view is only refreshed while visible, so a pane
+	// just revealed would otherwise sit blank until the next timer tick.
+	if (t == DT_KADROUTING_WND && ev.IsChecked()) {
+		m_kadroutingwnd->UpdateSnapshot();
+	}
 }
 
 
@@ -579,7 +594,7 @@ void CamuleDlg::OnResetLayout(wxCommandEvent& WXUNUSED(ev))
 
 void CamuleDlg::ApplyDefaultPerspective()
 {
-	for (int t = DT_TRANSFER_WND; t <= DT_STATS_WND; ++t) {
+	for (int t = DT_TRANSFER_WND; t <= DT_KADROUTING_WND; ++t) {
 		const DialogType type = static_cast<DialogType>(t);
 		wxWindow* win = PaneWindow(type);
 		if (!win) {
@@ -1323,7 +1338,7 @@ bool CamuleDlg::LoadGUIPrefs(bool override_pos, bool override_size)
 	// renamed an older string would restore a layout missing the new
 	// panes with no way to tell. Bumping the suffix retires every stale
 	// string at once and falls back to the default layout.
-	wxString perspective = config->Read(section + "AuiPerspectiveV1", wxEmptyString);
+	wxString perspective = config->Read(section + "AuiPerspectiveV2", wxEmptyString);
 	if (!perspective.IsEmpty()) {
 		m_auiMgr.LoadPerspective(perspective, false);
 	}
@@ -1371,7 +1386,7 @@ bool CamuleDlg::SaveGUIPrefs()
 
 	// Dock layout -- see the matching read in LoadGUIPrefs for why the
 	// key is versioned.
-	config->Write(section+"AuiPerspectiveV1", m_auiMgr.SavePerspective());
+	config->Write(section+"AuiPerspectiveV2", m_auiMgr.SavePerspective());
 
 	config->Flush(true);
 
@@ -1504,6 +1519,11 @@ void CamuleDlg::OnGUITimer(wxTimerEvent& WXUNUSED(evt))
 		// pane, and its category tabs still need refreshing.
 		if (thePrefs::ShowCatTabInfos() && IsDialogVisible(DT_TRANSFER_WND)) {
 			m_transferwnd->UpdateCatTabTitles();
+		}
+		// Only when the pane is on screen: a snapshot of the routing
+		// table is cheap, but not free, and nobody is watching it.
+		if (IsDialogVisible(DT_KADROUTING_WND)) {
+			m_kadroutingwnd->UpdateSnapshot();
 		}
 		if (thePrefs::AutoSortDownload()) {
 			m_transferwnd->downloadlistctrl->SortList();

@@ -74,6 +74,7 @@ if (BUILD_MONOLITHIC OR BUILD_REMOTEGUI)
 		FriendListCtrl.cpp
 		GenericClientListCtrl.cpp
 		KadDlg.cpp
+		KadRoutingWnd.cpp
 		MuleTrayIcon.cpp
 		OScopeCtrl.cpp
 		PrefsUnifiedDlg.cpp

@@ -49,6 +49,7 @@ class CSharedFilesWnd;
 class CSearchDlg;
 class CChatWnd;
 class CKadDlg;
+class CKadRoutingWnd;
 class PrefsUnifiedDlg;
 
 
@@ -139,7 +140,8 @@ public:
 		DT_SHARED_WND,
 		DT_CHAT_WND,
 		DT_STATS_WND,
-		DT_KAD_WND	// this one is still unused
+		DT_KAD_WND,	// this one is still unused
+		DT_KADROUTING_WND
 	};
 	DialogType GetActiveDialog()
 		{ return m_nActiveDialog; }
@@ -208,6 +210,8 @@ public:
 	CChatWnd*		m_chatwnd;
 	CStatisticsDlg*		m_statisticswnd;
 	CKadDlg*		m_kademliawnd;
+	//! Kad routing table view. Its own pane, unlike m_kademliawnd.
+	CKadRoutingWnd*		m_kadroutingwnd;
 	//! Pointer to the current preference dialog, if any.
 	PrefsUnifiedDlg*	m_prefsDialog;
 

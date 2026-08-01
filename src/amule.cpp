@@ -60,6 +60,7 @@
 #include "kademlia/kademlia/Kademlia.h"
 #include "kademlia/kademlia/Prefs.h"
 #include "kademlia/kademlia/UDPFirewallTester.h"
+#include "kademlia/routing/RoutingZone.h"	// Needed for CRoutingZone::GetSnapshot
 #include "CanceledFileList.h"
 #include "ClientCreditsList.h"		// Needed for CClientCreditsList
 #include "ClientList.h"			// Needed for CClientList
@@ -2116,6 +2117,24 @@ uint32	CamuleApp::GetBuddyPort() const
 const Kademlia::CUInt128& CamuleApp::GetKadID() const
 {
 	return Kademlia::CKademlia::GetKadID();
+}
+
+bool CamuleApp::GetKadRoutingSnapshot(KadRoutingSnapshot& snapshot) const
+{
+	snapshot = KadRoutingSnapshot();
+
+	if (!Kademlia::CKademlia::IsRunning()) {
+		return false;
+	}
+
+	const Kademlia::CRoutingZone* zone = Kademlia::CKademlia::GetRoutingZone();
+	if (!zone) {
+		return false;
+	}
+
+	zone->GetSnapshot(snapshot);
+
+	return true;
 }
 
 bool CamuleApp::CanDoCallback(uint32 clientServerIP, uint16 clientServerPort)

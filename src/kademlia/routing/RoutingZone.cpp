@@ -575,6 +575,71 @@ void CRoutingZone::GetAllEntries(ContactList *result, bool emptyFirst) const
 	}
 }
 
+void CRoutingZone::GetSnapshot(KadRoutingSnapshot& snapshot) const
+{
+	snapshot.zones.clear();
+	snapshot.totalContacts = 0;
+	snapshot.leafCount = 0;
+	snapshot.maxDepth = 0;
+	snapshot.selfId = me.ToHexString();
+	snapshot.valid = true;
+
+	AddToSnapshot(snapshot);
+}
+
+
+int CRoutingZone::AddToSnapshot(KadRoutingSnapshot& snapshot) const
+{
+	const int index = (int)snapshot.zones.size();
+	snapshot.zones.push_back(KadZoneInfo());
+
+	// The zone index lives in the low m_level bits of a 128 bit number
+	// (a subzone's index is its parent's shifted left, plus the side),
+	// so the meaningful part is the tail of the binary spelling. Trimming
+	// leading zeros would be wrong here: "01" and "1" are different
+	// zones at different levels.
+	const wxString bits = m_zoneIndex.ToBinaryString(false);
+	snapshot.zones[index].level = m_level;
+	snapshot.zones[index].zoneIndex = (m_level > 0 && m_level <= bits.length())
+		? bits.Right(m_level) : wxString();
+
+	if (IsLeaf()) {
+		ContactList entries;
+		m_bin->GetEntries(&entries);
+
+		for (ContactList::const_iterator it = entries.begin(); it != entries.end(); ++it) {
+			const CContact* contact = *it;
+
+			KadContactInfo info;
+			info.id       = contact->GetClientIDString();
+			info.ip       = contact->GetIPAddress();
+			info.udpPort  = contact->GetUDPPort();
+			info.tcpPort  = contact->GetTCPPort();
+			info.version  = contact->GetVersion();
+			info.type     = contact->GetType();
+			info.verified = contact->IsIPVerified();
+			info.created  = contact->GetCreatedTime();
+
+			snapshot.zones[index].contacts.push_back(info);
+		}
+
+		snapshot.totalContacts += (uint32_t)entries.size();
+		snapshot.leafCount++;
+		snapshot.maxDepth = std::max(snapshot.maxDepth, m_level);
+	} else {
+		// Recurse first, then store: the calls below append to the same
+		// vector and can move it out from under us.
+		const int firstChild  = m_subZones[0]->AddToSnapshot(snapshot);
+		const int secondChild = m_subZones[1]->AddToSnapshot(snapshot);
+
+		snapshot.zones[index].child[0] = firstChild;
+		snapshot.zones[index].child[1] = secondChild;
+	}
+
+	return index;
+}
+
+
 void CRoutingZone::TopDepth(int depth, ContactList *result, bool emptyFirst) const
 {
 	if (IsLeaf()) {

@@ -41,6 +41,7 @@ there client on the eMule forum..
 
 #include "Maps.h"
 #include "../utils/UInt128.h"
+#include "../../KadRoutingSnapshot.h"
 
 class CFileDataIO;
 
@@ -101,6 +102,17 @@ public:
 	uint32_t EstimateCount() const;
 	bool	 HasOnlyLANNodes() const noexcept;
 
+	/**
+	 * Copies this zone's subtree into a snapshot, for display.
+	 *
+	 * @param snapshot Filled in; any previous contents are discarded.
+	 *
+	 * The tree itself stays private: this hands out values, not the
+	 * CContact pointers the GUI must never hold, and not the shape of
+	 * the class. Call it on the root zone -- CKademlia::GetRoutingZone().
+	 */
+	void	 GetSnapshot(KadRoutingSnapshot& snapshot) const;
+
 	time_t	 m_nextBigTimer;
 	time_t	 m_nextSmallTimer;
 
@@ -125,6 +137,17 @@ private:
 	uint32_t GetMaxDepth() const noexcept;
 
 	void RandomBin(ContactList *result, bool emptyFirst = true) const;
+
+	/**
+	 * Appends this zone to the snapshot and recurses into its children.
+	 *
+	 * @return The index the zone was stored at.
+	 *
+	 * Children are addressed by index because the vector reallocates as
+	 * the recursion appends to it, which would leave any reference or
+	 * pointer taken beforehand dangling.
+	 */
+	int AddToSnapshot(KadRoutingSnapshot& snapshot) const;
 
 	void Split();
 
