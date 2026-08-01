@@ -76,6 +76,7 @@
 
 #include "kademlia/kademlia/Kademlia.h"
 #include "MuleVersion.h"			// Needed for GetMuleVersion()
+#include <common/ClientVersion.h>	// Needed for AMULE_FORK_NAME
 
 #ifdef ENABLE_IP2COUNTRY
 #include "IP2Country.h"				// Needed for IP2Country
@@ -768,6 +769,10 @@ void CamuleDlg::OnAboutButton(wxCommandEvent& WXUNUSED(ev))
 #ifdef GITDATE
 	msg << _("Snapshot:") << "\n " << GITDATE;
 #endif
+	// Fork identity, on its own line right under the upstream version
+	// this build is based on. Display path only: it never goes out on
+	// the wire, see ClientVersion.h.
+	msg << "\n" << AMULE_FORK_NAME " " AMULE_FORK_VERSION;
 	msg << "\n\n" << _("'All-Platform' p2p client based on eMule \n\n") <<
 		_("Website: https://amule-org.github.io \n") <<
 		_("Forum: https://github.com/amule-org/amule/discussions \n") <<
