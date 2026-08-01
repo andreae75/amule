@@ -195,6 +195,16 @@ private:
 	 */
 	void	OnAddCollection( wxCommandEvent& WXUNUSED(evt) );
 
+#ifdef __WINDOWS__
+	/**
+	 * Event-handler for the "Open containing folder" menu item.
+	 *
+	 * Windows only: it shells out to File Explorer, which has no
+	 * equivalent on the other platforms this builds on.
+	 */
+	void	OnOpenFolder( wxCommandEvent& event );
+#endif
+
 	//! Pointer used to ensure that the menu isn't displayed twice.
 	wxMenu* m_menu;
 

@@ -76,6 +76,11 @@ enum {
 	MP_COPYSEL_JSON,
 	MP_COPYSEL_HTML,
 
+// Reveal a file in the platform's file manager. Windows only so far, but
+// the id is unconditional so the value of everything below it does not
+// depend on the platform.
+	MP_OPENFOLDER,
+
 	MP_CONNECTTO,
 	MP_REMOVE,
 	MP_REMOVEALL,

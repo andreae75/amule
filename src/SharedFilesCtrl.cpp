@@ -39,6 +39,7 @@
 #include "BarShader.h"			// Needed for CBarShader
 #include "DataToText.h"			// Needed for PriorityToStr
 #include "GuiEvents.h"			// Needed for CoreNotify_*
+#include "Logger.h"				// Needed for AddLogLineC
 #include "MuleCollection.h"		// Needed for CMuleCollection
 #include "DownloadQueue.h"		// Needed for CDownloadQueue
 #include "TransferWnd.h"		// Needed for CTransferWnd
@@ -67,6 +68,9 @@ wxBEGIN_EVENT_TABLE(CSharedFilesCtrl,CMuleListCtrl)
 	EVT_MENU( MP_GETAICHED2KLINKSRC,	CSharedFilesCtrl::OnCreateURI )
 	EVT_MENU( MP_RENAME,		CSharedFilesCtrl::OnRename )
 	EVT_MENU( MP_WS,		CSharedFilesCtrl::OnGetFeedback )
+#ifdef __WINDOWS__
+	EVT_MENU( MP_OPENFOLDER,	CSharedFilesCtrl::OnOpenFolder )
+#endif
 
 
 	EVT_CHAR( CSharedFilesCtrl::OnKeyPressed )
@@ -155,6 +159,12 @@ void CSharedFilesCtrl::OnRightClick(wxListEvent& event)
 
 		m_menu->AppendSeparator();
 		m_menu->Append(MP_RENAME, _("Rename"));
+#ifdef __WINDOWS__
+		m_menu->Append(MP_OPENFOLDER, _("Open containing folder"));
+		// The remote GUI does not learn the path of a file over EC, so
+		// the entry has to be able to disable itself.
+		m_menu->Enable(MP_OPENFOLDER, file->GetFilePath().IsOk());
+#endif
 		m_menu->AppendSeparator();
 
 		if (file->GetFileName().GetExt() == "emulecollection") {
@@ -722,6 +732,48 @@ void CSharedFilesCtrl::OnRename( wxCommandEvent& WXUNUSED(event) )
 		}
 	}
 }
+
+
+#ifdef __WINDOWS__
+void CSharedFilesCtrl::OnOpenFolder( wxCommandEvent& WXUNUSED(event) )
+{
+	int item = GetNextItem( -1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED );
+	if ( item == -1 ) {
+		return;
+	}
+
+	const CKnownFile* file = reinterpret_cast<CKnownFile*>(GetItemData(item));
+	const CPath dir = file->GetFilePath();
+
+	if ( !dir.IsOk() || !dir.DirExists() ) {
+		AddLogLineC( CFormat( _("ERROR: The folder of '%s' does not exist.") )
+			% file->GetFileName() );
+		return;
+	}
+
+	// A part file sits on disk under its .part name rather than the name
+	// shown in the list, so there is nothing to highlight: just open the
+	// folder. Same when the file went missing between the two checks.
+	const CPath fullPath = dir.JoinPaths( file->GetFileName() );
+
+	wxString command = "explorer.exe ";
+	if ( fullPath.FileExists() ) {
+		// "/select," takes the item to highlight. The comma is part of
+		// the switch and explorer wants no space after it.
+		command << "/select,\"" << fullPath.GetRaw() << "\"";
+	} else {
+		command << "\"" << dir.GetRaw() << "\"";
+	}
+
+	// explorer.exe exits non-zero even when it did the right thing, so
+	// only a failure to spawn at all is worth reporting -- which is what
+	// an async wxExecute returns 0 for.
+	if ( wxExecute( command, wxEXEC_ASYNC ) == 0 ) {
+		AddLogLineC( CFormat( _("ERROR: Failed to open File Explorer! Command: `%s'") )
+			% command );
+	}
+}
+#endif // __WINDOWS__
 
 
 void CSharedFilesCtrl::OnKeyPressed( wxKeyEvent& event )
