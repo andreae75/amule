@@ -80,7 +80,7 @@
 // network.
 // ---------------------------------------------------------------------
 #define	AMULE_FORK_NAME		"NeRvOuX Edition"
-#define	AMULE_FORK_VERSION	"0.1.0"
+#define	AMULE_FORK_VERSION	"0.2.0"
 #define	AMULE_FORK_TAG		" [" AMULE_FORK_NAME " " AMULE_FORK_VERSION "]"
 
 // MOD_VERSION_LONG is what BaseClient.cpp sends to other clients as the
