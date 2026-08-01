@@ -862,7 +862,8 @@ void CSearchListCtrl::OnDrawItem(
 			dc->SetTextForeground(CMuleColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
 		}
 	} else {
-		dc->SetBackground(GetBrush(wxSYS_COLOUR_LISTBOX));
+		dc->SetBackground(*(wxTheBrushList->FindOrCreateBrush(
+			MuleTheme::GetRowColour((item % 2) != 0), wxBRUSHSTYLE_SOLID)));
 		dc->SetTextForeground(CMuleColour(wxSYS_COLOUR_WINDOWTEXT));
 	}
 

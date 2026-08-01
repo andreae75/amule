@@ -166,6 +166,16 @@ private:
 	wxString GetFileCellText( const CPartFile* file, int column ) const;
 
 	/**
+	 * The colour a row's text is drawn in, from the file's state.
+	 *
+	 * Green means data is actually arriving, which is the one thing a
+	 * glance at this list should answer; errors are red, paused files
+	 * recede into the disabled colour. Both light and dark variants are
+	 * named per state -- see the body.
+	 */
+	wxColour GetItemStatusColour( const FileCtrlItem_Struct* content ) const;
+
+	/**
 	 * @see CMuleListCtrl::GetCellText
 	 */
 	virtual wxString GetCellText( long row, int column ) const;

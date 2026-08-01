@@ -25,6 +25,16 @@
 
 #include "listctrl.h"
 
+// aMule: the colour scheme. This control paints its own rows, selection
+// and column headers, so routing its system-colour lookups through the
+// theme is what lets a dark scheme reach the lists at all.
+//
+// Reached by relative path on purpose: this is the one aMule header a
+// vendored wxWidgets file pulls in, and putting all of src/ on the
+// include path to hide that would risk shadowing system headers for
+// every other translation unit in the library.
+#include "../../MuleTheme.h"
+
 #ifndef WX_PRECOMP
     #include <wx/scrolwin.h>
     #include <wx/timer.h>
@@ -840,7 +850,7 @@ protected:
     // get the colour to be used for drawing the rules
     wxColour GetRuleColour() const
     {
-        return wxSystemSettings::GetColour(wxSYS_COLOUR_3DLIGHT);
+        return MuleTheme::GetColour(wxSYS_COLOUR_3DLIGHT);
     }
 
 private:
@@ -1441,7 +1451,7 @@ bool wxListLineData::SetAttributes(wxDC *dc,
             colText = *wxBLACK;
     }
 #else
-        colText = wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT);
+        colText = MuleTheme::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT);
 #endif
     else if ( attr && attr->HasTextColour() )
         colText = attr->GetTextColour();
@@ -1753,8 +1763,8 @@ wxListHeaderWindow::wxListHeaderWindow( wxWindow *win,
     if (!m_hasFont)
         SetOwnFont( attr.font );
 #else
-    SetOwnForegroundColour( wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT));
-    SetOwnBackgroundColour( wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
+    SetOwnForegroundColour( MuleTheme::GetColour(wxSYS_COLOUR_WINDOWTEXT));
+    SetOwnBackgroundColour( MuleTheme::GetColour(wxSYS_COLOUR_BTNFACE));
     if (!m_hasFont)
         SetOwnFont( wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT ));
 #endif
@@ -1816,6 +1826,19 @@ void wxListHeaderWindow::OnPaint( wxPaintEvent &WXUNUSED(event) )
     dc.SetBackgroundMode(wxTRANSPARENT);
     dc.SetTextForeground(GetForegroundColour());
 
+    // aMule: lay down the header background across the whole strip before
+    // the per-column loop runs. The loop only paints where a column is,
+    // so with the columns narrower than the window -- which is the normal
+    // case unless auto-fit is on -- the remainder to the right of the last
+    // one would keep whatever the platform erased it with, i.e. a band of
+    // white at the top of a dark list.
+    if ( MuleTheme::NeedsOwnerDrawnHeader() )
+    {
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(MuleTheme::GetColour(wxSYS_COLOUR_BTNFACE)));
+        dc.DrawRectangle(0, 0, w, h);
+    }
+
     int x = HEADER_OFFSET_X;
     int numColumns = m_owner->GetColumnCount();
     wxListItem item;
@@ -1841,6 +1864,28 @@ void wxListHeaderWindow::OnPaint( wxPaintEvent &WXUNUSED(event) )
             flags |= wxCONTROL_SELECTED;
 #endif
 
+        // aMule: wxRendererNative draws this through the platform theme,
+        // which stays light whatever the palette says -- and the label
+        // painted on top of it, in the palette's own foreground, comes
+        // out white on white. Paint it ourselves instead when the two
+        // disagree.
+        if ( MuleTheme::NeedsOwnerDrawnHeader() )
+        {
+            const wxRect hdr(x, HEADER_OFFSET_Y, cw, ch);
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(MuleTheme::GetColour(wxSYS_COLOUR_BTNFACE)));
+            dc.DrawRectangle(hdr);
+
+            // A single divider on the trailing edge: without it the
+            // columns of a dark header run into one continuous bar and
+            // there is no telling where one ends.
+            dc.SetPen(wxPen(MuleTheme::GetColour(wxSYS_COLOUR_BTNSHADOW)));
+            dc.DrawLine(hdr.GetRight(), hdr.GetTop(),
+                        hdr.GetRight(), hdr.GetBottom());
+            dc.SetPen(*wxTRANSPARENT_PEN);
+        }
+        else
+        {
         wxRendererNative::Get().DrawHeaderButton
                                 (
                                     this,
@@ -1848,6 +1893,7 @@ void wxListHeaderWindow::OnPaint( wxPaintEvent &WXUNUSED(event) )
                                     wxRect(x, HEADER_OFFSET_Y, cw, ch),
                                     flags
                                 );
+        }
 
         // see if we have enough space for the column label
 
@@ -2335,7 +2381,7 @@ wxListMainWindow::wxListMainWindow( wxWindow *parent,
     Init();
 
     m_highlightBrush = *(wxTheBrushList->FindOrCreateBrush(
-                            wxSystemSettings::GetColour
+                            MuleTheme::GetColour
                             (
                                 wxSYS_COLOUR_HIGHLIGHT
                             ),
@@ -2349,8 +2395,8 @@ wxListMainWindow::wxListMainWindow( wxWindow *parent,
     // always contrasts against the listbox background while still
     // looking distinctly muted vs. the focused selection.
     {
-        const wxColour _hl = wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT);
-        const wxColour _lb = wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX);
+        const wxColour _hl = MuleTheme::GetColour(wxSYS_COLOUR_HIGHLIGHT);
+        const wxColour _lb = MuleTheme::GetColour(wxSYS_COLOUR_LISTBOX);
         const wxColour _unfocused(
             (_hl.Red()   + _lb.Red())   / 2,
             (_hl.Green() + _lb.Green()) / 2,
@@ -2776,7 +2822,7 @@ void wxListMainWindow::OnPaint( wxPaintEvent &WXUNUSED(event) )
 
     // Ensure an uniform background color, as to avoid differences between
     // the automatically cleared parts and the rest of the canvas.
-    dc.SetBackground(*(wxTheBrushList->FindOrCreateBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX), wxBRUSHSTYLE_SOLID)));
+    dc.SetBackground(*(wxTheBrushList->FindOrCreateBrush(MuleTheme::GetColour(wxSYS_COLOUR_LISTBOX), wxBRUSHSTYLE_SOLID)));
 
     // We need to clear the DC manually, since we intercept BG-erase events.
     // Clearing must be done first thing because caching of the double-buffering causes artifacts otherwise.
@@ -5853,8 +5899,8 @@ wxGenericListCtrl::GetClassDefaultAttributes(wxWindowVariant variant)
 #else
     wxUnusedVar(variant);
     wxVisualAttributes attr;
-    attr.colFg = wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOXTEXT);
-    attr.colBg = wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX);
+    attr.colFg = MuleTheme::GetColour(wxSYS_COLOUR_LISTBOXTEXT);
+    attr.colBg = MuleTheme::GetColour(wxSYS_COLOUR_LISTBOX);
     attr.font  = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
     return attr;
 #endif

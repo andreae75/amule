@@ -40,6 +40,7 @@
 #include "DataToText.h"			// Needed for PriorityToStr
 #include "GuiEvents.h"			// Needed for CoreNotify_*
 #include "Logger.h"				// Needed for AddLogLineC
+#include "MuleTheme.h"			// Needed for MuleTheme::GetRowColour
 #include "MuleCollection.h"		// Needed for CMuleCollection
 #include "DownloadQueue.h"		// Needed for CDownloadQueue
 #include "TransferWnd.h"		// Needed for CTransferWnd
@@ -523,7 +524,8 @@ void CSharedFilesCtrl::OnDrawItem( int item, wxDC* dc, const wxRect& rect, const
 		// The second blending goes over the first one.
 		dc->SetPen(newcol.Blend(65).GetPen());
 	} else {
-		dc->SetBackground( CMuleColour(wxSYS_COLOUR_LISTBOX).GetBrush() );
+		dc->SetBackground(*(wxTheBrushList->FindOrCreateBrush(
+			MuleTheme::GetRowColour((item % 2) != 0), wxBRUSHSTYLE_SOLID)));
 		dc->SetTextForeground(CMuleColour(wxSYS_COLOUR_WINDOWTEXT));
 		dc->SetPen(*wxTRANSPARENT_PEN);
 	}

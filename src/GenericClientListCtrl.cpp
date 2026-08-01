@@ -47,6 +47,7 @@
 #include "SharedFileList.h"	// Needed for CSharedFileList
 #include "ClientRef.h"		// Needed for CClientRef
 #include "FriendList.h"
+#include "MuleTheme.h"		// Needed for MuleTheme::GetColour
 
 struct ClientCtrlItem_Struct
 {
@@ -701,11 +702,12 @@ void CGenericClientListCtrl::OnDrawItem(
 			dc->SetBackground(m_highlightUnfocusBrush);
 			colour = m_highlightUnfocusBrush.GetColour();
 		}
-		dc->SetTextForeground(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
+		dc->SetTextForeground(MuleTheme::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
 		dc->SetPen( colour.Blend(65).GetPen() );
 	} else {
-		dc->SetBackground(*(wxTheBrushList->FindOrCreateBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX), wxBRUSHSTYLE_SOLID)));
-		dc->SetTextForeground(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT));
+		dc->SetBackground(*(wxTheBrushList->FindOrCreateBrush(
+			MuleTheme::GetRowColour((item % 2) != 0), wxBRUSHSTYLE_SOLID)));
+		dc->SetTextForeground(MuleTheme::GetColour(wxSYS_COLOUR_WINDOWTEXT));
 		dc->SetPen(*wxTRANSPARENT_PEN);
 	}
 	dc->SetBrush( dc->GetBackground() );

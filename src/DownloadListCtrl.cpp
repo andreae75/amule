@@ -45,6 +45,7 @@
 #include "TerminationProcess.h"	// Needed for CTerminationProcess
 #include "TransferWnd.h"
 #include "SourceListCtrl.h"
+#include "MuleTheme.h"			// Needed for MuleTheme::GetColour
 
 class CPartFile;
 
@@ -849,6 +850,52 @@ void CDownloadListCtrl::OnKeyPressed( wxKeyEvent& event )
 }
 
 
+wxColour CDownloadListCtrl::GetItemStatusColour(const FileCtrlItem_Struct* content) const
+{
+	// Same per-theme approach as the search list (47617df): a colour
+	// picked to read on white is illegible on a dark listbox, and the
+	// other way round. Each state names both of its variants rather
+	// than deriving one from the other.
+	const bool darkBg = CMuleColour::IsDarkBackground();
+	const CPartFile* file = content ? content->GetFile() : NULL;
+
+	if (file == NULL) {
+		return MuleTheme::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+	}
+
+	switch (file->GetStatus()) {
+		case PS_COMPLETE:
+		case PS_COMPLETING:
+			return darkBg ? wxColour(0x5F, 0xD7, 0x5F) : wxColour(0x1B, 0x7F, 0x1B);
+
+		case PS_ERROR:
+		case PS_INSUFFICIENT:
+			return darkBg ? wxColour(0xFF, 0x6B, 0x6B) : wxColour(0xCC, 0x00, 0x00);
+
+		case PS_PAUSED:
+			return MuleTheme::GetColour(wxSYS_COLOUR_GRAYTEXT);
+
+		case PS_HASHING:
+		case PS_WAITING_FOR_HASH:
+		case PS_ALLOCATING:
+			return darkBg ? wxColour(0xE0, 0xB0, 0x4F) : wxColour(0x8A, 0x5A, 0x00);
+
+		default:
+			break;
+	}
+
+	// Nothing wrong with it, so the question is whether it is actually
+	// moving. A file with sources sending data reads green; one merely
+	// queued keeps the ordinary text colour, which is what makes the
+	// green mean something.
+	if (file->GetTransferingSrcCount() > 0) {
+		return darkBg ? wxColour(0x5F, 0xD7, 0x5F) : wxColour(0x1B, 0x7F, 0x1B);
+	}
+
+	return MuleTheme::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+}
+
+
 void CDownloadListCtrl::OnDrawItem(
 	int item, wxDC* dc, const wxRect& rect, const wxRect& rectHL, bool highlighted)
 {
@@ -870,11 +917,15 @@ void CDownloadListCtrl::OnDrawItem(
 			dc->SetBackground(m_hilightUnfocusBrush);
 			colour = m_hilightUnfocusBrush.GetColour();
 		}
-		dc->SetTextForeground(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
+		dc->SetTextForeground(MuleTheme::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
 		dc->SetPen( colour.Blend(65).GetPen() );
 	} else {
-		dc->SetBackground(*(wxTheBrushList->FindOrCreateBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX), wxBRUSHSTYLE_SOLID)));
-		dc->SetTextForeground(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT));
+		// Banded rows. The stripe is keyed off the item's own index
+		// rather than a running counter, so it stays put when the list
+		// is re-sorted or scrolled.
+		dc->SetBackground(*(wxTheBrushList->FindOrCreateBrush(
+			MuleTheme::GetRowColour((item % 2) != 0), wxBRUSHSTYLE_SOLID)));
+		dc->SetTextForeground(GetItemStatusColour(content));
 		dc->SetPen(*wxTRANSPARENT_PEN);
 	}
 	dc->SetBrush( dc->GetBackground() );

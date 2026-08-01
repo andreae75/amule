@@ -170,7 +170,7 @@ void CKadZoneMapCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt))
 		return;
 	}
 
-	dc.SetTextForeground(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT));
+	dc.SetTextForeground(MuleTheme::GetColour(wxSYS_COLOUR_WINDOWTEXT));
 
 	// One band per level. Bands get a floor so a deep tree stays legible
 	// rather than collapsing into hairlines; the plot then simply uses
@@ -222,7 +222,7 @@ void CKadZoneMapCtrl::DrawZone(wxDC& dc, int zone, const wxRect& rect, int rowHe
 	dc.DrawLine(cell.GetRight(), cell.GetTop(), cell.GetRight(), cell.GetBottom());
 
 	if (zone == m_selected) {
-		dc.SetPen(wxPen(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT), 2));
+		dc.SetPen(wxPen(MuleTheme::GetColour(wxSYS_COLOUR_HIGHLIGHT), 2));
 		dc.SetBrush(*wxTRANSPARENT_BRUSH);
 		dc.DrawRectangle(cell.Deflate(1, 1));
 	}

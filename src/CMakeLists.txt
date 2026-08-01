@@ -692,6 +692,7 @@ if (NEED_LIB_MULEAPPGUI)
 		MuleCollection.cpp
 		MuleColour.cpp
 		MuleGifCtrl.cpp
+		MuleTheme.cpp
 		MuleListCtrl.cpp
 		MuleNotebook.cpp
 		MuleTextCtrl.cpp
@@ -729,6 +730,14 @@ if (NEED_LIB_MULEAPPGUI)
 		# link too rather than just inheriting headers.
 		PUBLIC wxWidgets::AUI
 	)
+
+	if (WIN32)
+		# MuleTheme::ApplyTitleBar asks the desktop window manager for a
+		# dark caption (DwmSetWindowAttribute). PUBLIC for the same
+		# reason as AUI above: amule and amulegui compile GUI_SOURCES
+		# into themselves, so they have to carry the link too.
+		target_link_libraries (muleappgui PUBLIC dwmapi)
+	endif()
 
 	# generate_icon_data produces ${BINARY_DIR}/src/icons/icon_data.c,
 	# which is part of GUI_SOURCES (see cmake/source-vars.cmake).

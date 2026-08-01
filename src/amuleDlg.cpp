@@ -60,6 +60,11 @@
 #include "MuleTrayIcon.h"
 #include "muuli_wdr.h"				// Needed for ID_BUTTON*
 #include "Preferences.h"			// Needed for CPreferences
+#include "MuleTheme.h"				// Needed for MuleTheme::SetScheme
+
+// wxAuiManager comes in via amuleDlg.h, but framemanager.h only forward-
+// declares the art provider; recolouring it needs the real class.
+#include <wx/aui/dockart.h>
 #include "PrefsUnifiedDlg.h"
 #include "SearchDlg.h"				// Needed for CSearchDlg
 #include "Server.h"				// Needed for CServer
@@ -185,6 +190,16 @@ m_last_iconizing(0),
 m_skinFileName(),
 m_clientSkinNames(CLIENT_SKIN_SIZE)
 {
+	// Before anything is constructed: every control below takes its
+	// colours from the theme as it is built, and the list controls latch
+	// their background in their own constructor. Setting the scheme
+	// afterwards would only reach whatever repaints later.
+	MuleTheme::SetScheme(static_cast<ColourScheme>(thePrefs::GetColourScheme()));
+
+	// The caption sits outside the client area, so no amount of painting
+	// reaches it -- it has to be asked for separately.
+	MuleTheme::ApplyTitleBar(this);
+
 	// Initialize skin names
 	m_clientSkinNames[Client_Green_Smiley]            = "Transfer";
 	m_clientSkinNames[Client_Red_Smiley]              = "Connecting";
@@ -258,6 +273,28 @@ m_clientSkinNames(CLIENT_SKIN_SIZE)
 	m_auiHost = new wxPanel(p_cnt, -1);
 	contentSizer->Add(m_auiHost, wxSizerFlags(1).Expand());
 	m_auiMgr.SetManagedWindow(m_auiHost);
+
+	// wxAUI's art provider reads the system colours once, when it is
+	// constructed, and it is wx's own code rather than the vendored
+	// control -- so it never passes through MuleTheme and would leave a
+	// band of light chrome around every pane. Push the palette in.
+	if (wxAuiDockArt* art = m_auiMgr.GetArtProvider()) {
+		const wxColour face = MuleTheme::GetColour(wxSYS_COLOUR_BTNFACE);
+		const wxColour text = MuleTheme::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+		const wxColour edge = MuleTheme::GetColour(wxSYS_COLOUR_BTNSHADOW);
+		const wxColour active = MuleTheme::GetColour(wxSYS_COLOUR_HIGHLIGHT);
+
+		art->SetColour(wxAUI_DOCKART_BACKGROUND_COLOUR, face);
+		art->SetColour(wxAUI_DOCKART_SASH_COLOUR, face);
+		art->SetColour(wxAUI_DOCKART_BORDER_COLOUR, edge);
+		art->SetColour(wxAUI_DOCKART_GRIPPER_COLOUR, face);
+		art->SetColour(wxAUI_DOCKART_INACTIVE_CAPTION_COLOUR, edge);
+		art->SetColour(wxAUI_DOCKART_INACTIVE_CAPTION_GRADIENT_COLOUR, edge);
+		art->SetColour(wxAUI_DOCKART_INACTIVE_CAPTION_TEXT_COLOUR, text);
+		art->SetColour(wxAUI_DOCKART_ACTIVE_CAPTION_COLOUR, active);
+		art->SetColour(wxAUI_DOCKART_ACTIVE_CAPTION_GRADIENT_COLOUR, active);
+		art->SetColour(wxAUI_DOCKART_ACTIVE_CAPTION_TEXT_COLOUR, text);
+	}
 
 	m_serverwnd = new CServerWnd(m_auiHost, m_srv_split_pos);
 	AddLogLineN("");

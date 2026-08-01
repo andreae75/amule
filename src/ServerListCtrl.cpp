@@ -46,7 +46,12 @@
 #include "Preferences.h"	// Needed for thePrefs
 
 
-#define CMuleColour(x) (wxSystemSettings::GetColour(x))
+#include "MuleTheme.h"		// Needed for MuleTheme::GetColour
+
+// This file shadows CMuleColour with a macro rather than including it.
+// Route it through the theme all the same, or the server list would be
+// the one list that ignored the colour scheme.
+#define CMuleColour(x) (MuleTheme::GetColour(x))
 
 
 wxBEGIN_EVENT_TABLE(CServerListCtrl,CMuleListCtrl)

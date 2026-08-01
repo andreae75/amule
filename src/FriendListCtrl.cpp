@@ -38,6 +38,7 @@
 #include "muuli_wdr.h"
 #include "SafeFile.h"
 #include "FriendList.h"		// Needed for the friends list
+#include "MuleTheme.h"		// Needed for MuleTheme::GetColour
 
 wxBEGIN_EVENT_TABLE(CFriendListCtrl, CMuleListCtrl)
 	EVT_RIGHT_DOWN(CFriendListCtrl::OnRightClick)
@@ -98,7 +99,7 @@ void CFriendListCtrl::UpdateFriend(CFriend* toupdate)
 	// invisible on dark themes (#640).
 	SetItemTextColour(itemnr, toupdate->GetLinkedClient().IsLinked()
 		? *wxBLUE
-		: wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT));
+		: MuleTheme::GetColour(wxSYS_COLOUR_WINDOWTEXT));
 }
 
 

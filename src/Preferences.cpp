@@ -196,6 +196,7 @@ wxString	CPreferences::s_CustomBrowser;
 bool		CPreferences::s_BrowserTab;
 CPath		CPreferences::s_OSDirectory;
 wxString	CPreferences::s_Skin;
+int		CPreferences::s_colourScheme;
 bool		CPreferences::s_FastED2KLinksHandler;
 bool		CPreferences::s_ToolbarOrientation;
 bool		CPreferences::s_AICHTrustEveryHash;
@@ -1184,6 +1185,9 @@ void CPreferences::BuildItemList( const wxString& appdir )
 	NewCfgItem(IDC_PROGBAR,		(new Cfg_Bool( "/ExternalConnect/ShowProgressBar", s_ProgBar, true )));
 	NewCfgItem(IDC_PERCENT,		(new Cfg_Bool( "/ExternalConnect/ShowPercent", s_Percent, true )));
 	NewCfgItem(IDC_SKIN,		(new Cfg_Skin(  "/SkinGUIOptions/Skin", s_Skin, "" )));
+	// Defaults to 0 == Scheme_System, which is also what a config file
+	// written before this option existed reads back as.
+	NewCfgItem(IDC_COLOURSCHEME,	(MkCfg_Int( "/SkinGUIOptions/ColourScheme", s_colourScheme, 0 )));
 	NewCfgItem(IDC_VERTTOOLBAR,	(new Cfg_Bool( "/eMule/VerticalToolbar", s_ToolbarOrientation, false )));
 	NewCfgItem(IDC_SHOW_COUNTRY_FLAGS,	(new Cfg_Bool( "/eMule/GeoIPEnabled", s_GeoIPEnabled, true )));
 #ifndef __GIT__

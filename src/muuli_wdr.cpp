@@ -1775,6 +1775,24 @@ wxSizer *PreferencesGuiTweaksTab( wxWindow *parent, bool call_fit, bool set_size
     wxChoice *item3 = new wxChoice( parent, IDC_SKIN, wxDefaultPosition, wxSize(200,-1), 1, strs3, 0 );
     item1->Add( item3, wxSizerFlags().Center().Border(wxLEFT|wxRIGHT, 0) );
     item0->Add( item1, wxSizerFlags().Expand().CenterVertical().Border(wxTOP|wxBOTTOM, 5) );
+
+    wxBoxSizer *itemCS = new wxBoxSizer( wxHORIZONTAL );
+
+    wxStaticText *itemCSLabel = new wxStaticText( parent, -1, _("Colour scheme: "), wxDefaultPosition, wxDefaultSize, 0 );
+    itemCS->Add( itemCSLabel, wxSizerFlags().CenterVertical().Right() );
+    // Order matches the ColourScheme enum in MuleTheme.h -- the selection
+    // index is what gets written to the config file, so the two must not
+    // drift apart.
+    wxString strsCS[] =
+    {
+        _("System"),
+        _("Light"),
+        _("Dark")
+    };
+    wxChoice *itemCSChoice = new wxChoice( parent, IDC_COLOURSCHEME, wxDefaultPosition, wxSize(200,-1), 3, strsCS, 0 );
+    itemCSChoice->SetToolTip( _("Menus and some native controls keep the system colours; the lists, panels and graphs follow this setting.") );
+    itemCS->Add( itemCSChoice, wxSizerFlags().Center().Border(wxLEFT|wxRIGHT, 0) );
+    item0->Add( itemCS, wxSizerFlags().Expand().CenterVertical().Border(wxTOP|wxBOTTOM, 5) );
     wxCheckBox *item4 = new wxCheckBox( parent, IDC_FED2KLH, _("Show \"Fast eD2k Links Handler\" in every window."), wxDefaultPosition, wxDefaultSize, 0 );
     item4->SetValue( TRUE );
     item0->Add( item4, wxSizerFlags().Expand().CenterVertical() );

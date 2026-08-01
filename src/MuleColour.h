@@ -31,6 +31,7 @@
 #include <wx/brush.h> // needed for wxBrushStyle enum values
 #include <wx/font.h>  // needed for wxFontStyle enum values
 #include "Types.h"
+#include "MuleTheme.h"	// Needed for MuleTheme::GetColour
 
 class wxPen;
 class wxBrush;
@@ -50,10 +51,15 @@ public:
 		Set((rgb & 0xFF), (rgb >> 8) & 0xFF, (rgb >> 16) & 0xFF);
 	}
 
+	// Goes through MuleTheme rather than straight to wxSystemSettings:
+	// this ctor is how nearly all of aMule's own painting picks up its
+	// colours, so routing it is what makes a colour scheme reach the
+	// owner-drawn lists, the progress bars and the graphs at once.
+	// Answers the platform verbatim when no scheme is in force.
 	CMuleColour(wxSystemColour colour)
 	{
 		Init();
-		const wxColour& wxcolour = wxSystemSettings::GetColour(colour);
+		const wxColour wxcolour = MuleTheme::GetColour(colour);
 		Set(wxcolour.Red(), wxcolour.Green(), wxcolour.Blue());
 	}
 
@@ -123,8 +129,8 @@ public:
 	// "not the focused one".
 	static wxColour GetUnfocusedHighlight()
 	{
-		const wxColour hl = wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT);
-		const wxColour lb = wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX);
+		const wxColour hl = MuleTheme::GetColour(wxSYS_COLOUR_HIGHLIGHT);
+		const wxColour lb = MuleTheme::GetColour(wxSYS_COLOUR_LISTBOX);
 		return wxColour(
 			(hl.Red()   + lb.Red())   / 2,
 			(hl.Green() + lb.Green()) / 2,

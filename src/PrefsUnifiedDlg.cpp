@@ -866,6 +866,15 @@ void PrefsUnifiedDlg::OnOk(wxCommandEvent& WXUNUSED(event))
 		restart_needed_msg += _("- Temp folder changed.\n");
 	}
 
+	// Applied at startup rather than here. The list controls take their
+	// background from the theme once, in their constructor
+	// (extern/wxWidgets/listctrl.cpp), so repainting on the fly would
+	// leave half the window on the old scheme -- worse than asking.
+	if (CfgChanged(IDC_COLOURSCHEME)) {
+		restart_needed = true;
+		restart_needed_msg += _("- Colour scheme changed.\n");
+	}
+
 	if (CfgChanged(IDC_NETWORKED2K) && thePrefs::GetNetworkED2K()) {
 		restart_needed = true;
 		restart_needed_msg += _("- ED2K network enabled.\n");

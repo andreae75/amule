@@ -516,6 +516,11 @@ public:
 
 	static const wxString&	GetSkin()			{ return s_Skin; }
 
+	//! Light / dark / follow the system. Stored as the ColourScheme enum
+	//! in MuleTheme.h; kept as a plain int here so this header, which the
+	//! core includes, stays free of any GUI dependency.
+	static int		GetColourScheme()		{ return s_colourScheme; }
+
 	static bool		VerticalToolbar()		{ return s_ToolbarOrientation; }
 
 	static const CPath&	GetOSDir()			{ return s_OSDirectory; }
@@ -826,6 +831,7 @@ protected:
 	static uint16	s_OSUpdate;
 
 	static wxString	s_Skin;
+	static int	s_colourScheme;
 
 	static bool	s_FastED2KLinksHandler;	// Madcat - Toggle Fast ED2K Links Handler
 

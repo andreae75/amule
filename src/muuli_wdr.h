@@ -311,6 +311,10 @@ wxSizer *PreferencesStatisticsTab( wxWindow *parent, bool call_fit = TRUE, bool 
 wxSizer *PreferencesaMuleTweaksTab( wxWindow *parent, bool call_fit = TRUE, bool set_sizer = TRUE );
 
 #define IDC_SKIN 10199
+// Appended out of numeric order: the ids below are a contiguous block
+// this page's controls were allocated from, and inserting into it would
+// renumber every one of them.
+#define IDC_COLOURSCHEME 10345
 #define IDC_FED2KLH 10200
 #define IDC_EXTCATINFO 10201
 #define IDC_SHOWVERSIONONTITLE 10202
