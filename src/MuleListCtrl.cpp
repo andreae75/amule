@@ -60,6 +60,9 @@ wxBEGIN_EVENT_TABLE(CMuleListCtrl, MuleExtern::wxGenericListCtrl)
 	EVT_LIST_DELETE_ALL_ITEMS(-1,	CMuleListCtrl::OnAllItemsDeleted)
 	EVT_CHAR(						CMuleListCtrl::OnChar)
 	EVT_MENU_RANGE(MP_LISTCOL_1, MP_LISTCOL_15, CMuleListCtrl::OnMenuSelected)
+	EVT_MENU(MP_LISTCOL_AUTOSIZE,	CMuleListCtrl::OnToggleAutoSize)
+	EVT_SIZE(						CMuleListCtrl::OnListSize)
+	EVT_LIST_COL_END_DRAG(-1,		CMuleListCtrl::OnColumnEndDrag)
 	EVT_MOUSEWHEEL(CMuleListCtrl::OnMouseWheel)
 wxEND_EVENT_TABLE()
 
@@ -75,6 +78,8 @@ CMuleListCtrl::CMuleListCtrl(wxWindow *parent, wxWindowID winid, const wxPoint& 
 	m_tts_time = 0;
 	m_tts_item = -1;
 	m_isSorting = false;
+	m_autoSizeColumns = false;
+	m_inAutoSize = false;
 
 	if (imgList.GetImageCount() == 0) {
 		imgList.Add(wxArtProvider::GetBitmap("amule:sort_dn"));
@@ -168,6 +173,10 @@ void CMuleListCtrl::SaveSettings()
 	}
 
 	cfg->Write("/eMule/TableWidths" + m_name, buffer);
+
+	// Saved next to the widths, and per list: someone who wants the
+	// download list fitted rarely wants the same of every other one.
+	cfg->Write("/eMule/TableAutoSize" + m_name, (long)(m_autoSizeColumns ? 1 : 0));
 }
 
 void CMuleListCtrl::ParseOldConfigEntries(const wxString& sortOrders, const wxString& columnWidths)
@@ -268,6 +277,12 @@ void CMuleListCtrl::LoadSettings()
 	if (m_sort_orders.empty()) {
 		m_sort_orders.push_back(CColPair(0, 0));
 	}
+
+	// Off for anyone who has never asked for it, so an existing setup
+	// keeps the widths it had. No fit from here: the list is usually not
+	// at its final size yet during construction, and the size event that
+	// gets it there will do it.
+	m_autoSizeColumns = cfg->Read("/eMule/TableAutoSize" + m_name, 0L) != 0;
 
 	// Re-enable sorting and resort the contents (if any).
 	m_sort_func = sortFunc;
@@ -476,7 +491,95 @@ void CMuleListCtrl::OnColumnRClick(wxListEvent& evt)
 		menu.Check( i + MP_LISTCOL_1, GetColumnWidth(i) > COL_SIZE_MIN );
 	}
 
+	menu.AppendSeparator();
+	menu.AppendCheckItem(MP_LISTCOL_AUTOSIZE, _("Auto-fit columns to window"));
+	menu.Check(MP_LISTCOL_AUTOSIZE, m_autoSizeColumns);
+
 	PopupMenu(&menu, evt.GetPoint());
+}
+
+
+void CMuleListCtrl::OnToggleAutoSize(wxCommandEvent& evt)
+{
+	m_autoSizeColumns = evt.IsChecked();
+
+	// Turning it off leaves the columns exactly where the fit put them:
+	// there is no "before" to go back to that would not be a surprise of
+	// its own, and the widths stay editable by hand.
+	FitColumnsToWidth();
+}
+
+
+void CMuleListCtrl::OnListSize(wxSizeEvent& evt)
+{
+	FitColumnsToWidth();
+
+	// The generic list control does its own layout in this event, and
+	// skipping is what lets it run.
+	evt.Skip();
+}
+
+
+void CMuleListCtrl::OnColumnEndDrag(wxListEvent& evt)
+{
+	// Dragging a divider while the fit is on means the user wants that
+	// width, and the next resize would take it straight back. Treat the
+	// drag as taking manual control rather than silently undoing it --
+	// the header menu shows the toggle went off.
+	if (m_autoSizeColumns && !m_inAutoSize) {
+		m_autoSizeColumns = false;
+	}
+
+	evt.Skip();
+}
+
+
+void CMuleListCtrl::FitColumnsToWidth()
+{
+	if (!m_autoSizeColumns || m_inAutoSize) {
+		return;
+	}
+
+	// Below this a column is a sliver with no readable content, so a
+	// window too narrow to give every visible column that much is left
+	// alone -- with a horizontal scrollbar, which beats a row of slivers.
+	const int minColumnWidth = 24;
+
+	std::vector<int> visible;
+	int currentTotal = 0;
+	for (int i = 0; i < GetColumnCount(); ++i) {
+		const int width = GetColumnWidth(i);
+		if (width > COL_SIZE_MIN) {
+			visible.push_back(i);
+			currentTotal += width;
+		}
+	}
+
+	const int available = GetClientSize().GetWidth();
+	if (visible.empty() || currentTotal <= 0
+		|| available < minColumnWidth * (int)visible.size())
+	{
+		return;
+	}
+
+	m_inAutoSize = true;
+
+	// Scale every column by the same factor, then hand the rounding
+	// leftover to the last one so the total lands exactly on the client
+	// width -- a pixel short leaves a gap, a pixel over grows a
+	// scrollbar and re-fires this whole thing.
+	int used = 0;
+	for (size_t i = 0; i + 1 < visible.size(); ++i) {
+		const int scaled = (int)((sint64)GetColumnWidth(visible[i]) * available / currentTotal);
+		const int width = std::max(minColumnWidth, scaled);
+
+		SetColumnWidth(visible[i], width);
+		used += width;
+	}
+
+	SetColumnWidth(visible.back(), std::max(minColumnWidth, available - used));
+
+	m_inAutoSize = false;
 }
 
 
@@ -495,6 +598,10 @@ void CMuleListCtrl::OnMenuSelected( wxCommandEvent& evt )
 		int oldsize = m_column_sizes[col];
 		SetColumnWidth(col, (oldsize > 0) ? oldsize : GetColumnDefaultWidth(col));
 	}
+
+	// Hiding a column leaves its width behind as a gap, and showing one
+	// pushes the rest off the edge. Either way the fit has to be redone.
+	FitColumnsToWidth();
 }
 
 

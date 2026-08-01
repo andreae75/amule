@@ -337,6 +337,34 @@ protected:
 	void OnMenuSelected(wxCommandEvent& evt);
 
 	/**
+	 * Event handler for the auto-fit menu item.
+	 */
+	void OnToggleAutoSize(wxCommandEvent& evt);
+
+	/**
+	 * Event handler for resizes, so the fit follows the window.
+	 */
+	void OnListSize(wxSizeEvent& evt);
+
+	/**
+	 * Event handler for the end of a column drag.
+	 */
+	void OnColumnEndDrag(wxListEvent& evt);
+
+	/**
+	 * Spreads the client width across the visible columns.
+	 *
+	 * Widths are scaled from what they are now, so the proportions the
+	 * user set are preserved and only the leftover (or the shortfall) is
+	 * distributed. Does nothing unless auto-fit is on.
+	 *
+	 * Content is deliberately not measured: these lists are owner-drawn,
+	 * their cells hold no text, and wxLIST_AUTOSIZE would shrink every
+	 * column to the width of its header.
+	 */
+	void FitColumnsToWidth();
+
+	/**
 	 * Event handler for the mouse wheel.
 	 */
 	void OnMouseWheel(wxMouseEvent &event);
@@ -369,6 +397,14 @@ private:
 
 	//! The name of the table. Used to load/save settings.
 	wxString		m_name;
+
+	//! Whether the columns are kept fitted to the window. Per list, and
+	//! saved with the other column settings.
+	bool			m_autoSizeColumns;
+
+	//! Guards FitColumnsToWidth() against re-entering through the size
+	//! events its own SetColumnWidth() calls can produce.
+	bool			m_inAutoSize;
 
 	//! The sorter function needed by wxListCtrl.
 	MuleListCtrlCompare	m_sort_func;

@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: aMule\n"
 "Report-Msgid-Bugs-To: https://github.com/amule-org/amule/issues\n"
-"POT-Creation-Date: 2026-08-01 19:43+0200\n"
+"POT-Creation-Date: 2026-08-01 19:58+0200\n"
 "PO-Revision-Date: 2026-06-07 21:51+0200\n"
 "Last-Translator: micrococo\n"
 "Language-Team: Spanish\n"
@@ -2858,6 +2858,10 @@ msgstr "ERROR: "
 #: src/Logger.cpp:329
 msgid "WARNING: "
 msgstr "AVISO: "
+
+#: src/MuleListCtrl.cpp:495
+msgid "Auto-fit columns to window"
+msgstr ""
 
 #: src/MuleNotebook.cpp:181 src/muuli_wdr.cpp:765 src/muuli_wdr.cpp:1181
 #: src/muuli_wdr.cpp:2704 src/muuli_wdr.cpp:2937

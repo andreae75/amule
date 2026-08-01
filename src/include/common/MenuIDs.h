@@ -81,6 +81,12 @@ enum {
 // depend on the platform.
 	MP_OPENFOLDER,
 
+// Column header menu: keep the columns fitted to the window's width.
+// Deliberately not next to MP_LISTCOL_1..15 below -- MP_ASSIGNCAT is
+// pinned to MP_LISTCOL_15 + 1, so a name inserted there would silently
+// take MP_ASSIGNCAT's value.
+	MP_LISTCOL_AUTOSIZE,
+
 	MP_CONNECTTO,
 	MP_REMOVE,
 	MP_REMOVEALL,

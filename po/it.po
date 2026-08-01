@@ -19,7 +19,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: aMule 2.3.3\n"
 "Report-Msgid-Bugs-To: https://github.com/amule-org/amule/issues\n"
-"POT-Creation-Date: 2026-08-01 19:43+0200\n"
+"POT-Creation-Date: 2026-08-01 19:58+0200\n"
 "PO-Revision-Date: 2026-06-06 00:00+0200\n"
 "Last-Translator: got3nks <got3nks@users.noreply.github.com>\n"
 "Language-Team: SebastianoPistore.info@protonmail.ch\n"
@@ -2850,6 +2850,10 @@ msgstr "ERRORE: "
 #: src/Logger.cpp:329
 msgid "WARNING: "
 msgstr "ATTENZIONE: "
+
+#: src/MuleListCtrl.cpp:495
+msgid "Auto-fit columns to window"
+msgstr ""
 
 #: src/MuleNotebook.cpp:181 src/muuli_wdr.cpp:765 src/muuli_wdr.cpp:1181
 #: src/muuli_wdr.cpp:2704 src/muuli_wdr.cpp:2937
