@@ -288,9 +288,16 @@ Write-Host '==> Compilazione' -ForegroundColor Cyan
 
 # Un aMule in esecuzione tiene lockato il .exe e il link fallisce con
 # "Permission denied". Capita di continuo iterando sulla stessa macchina.
+#
+# Solo i processi avviati DA questa build dir tengono lockato l'output del
+# linker: una copia installata altrove (o un aMule di sistema) non c'entra
+# nulla e chiuderla e' un effetto collaterale che nessuno ha chiesto. Il
+# match e' quindi sul path dell'eseguibile, non sul nome del processo.
+$BuildDirAbs = (Join-Path $RepoRoot $BuildDir).TrimEnd('\') + '\'
 Get-Process amule, amuled, amulegui -ErrorAction SilentlyContinue |
+    Where-Object { $_.Path -and $_.Path.StartsWith($BuildDirAbs, [StringComparison]::OrdinalIgnoreCase) } |
     ForEach-Object {
-        Write-Host "    chiudo $($_.ProcessName) (PID $($_.Id)) - terrebbe lockato l'exe" -ForegroundColor DarkGray
+        Write-Host "    chiudo $($_.ProcessName) (PID $($_.Id)) - gira da $BuildDir e terrebbe lockato l'exe" -ForegroundColor DarkGray
         Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
     }
 
