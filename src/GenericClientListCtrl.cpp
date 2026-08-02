@@ -40,6 +40,8 @@
 #include "GuiEvents.h"		// Needed for CoreNotify_*
 #ifdef ENABLE_IP2COUNTRY
 	#include "IP2Country.h"	// Needed for IP2Country
+#else
+	#include <wx/artprov.h>	// Needed for wxArtProvider::GetBitmap
 #endif
 #include "muuli_wdr.h"		// Needed for ID_DLOADLIST
 #include "PartFile.h"		// Needed for CPartFile
@@ -896,6 +898,29 @@ void CGenericClientListCtrl::DrawClientItem(wxDC* dc, int nColumn, const wxRect&
 					userName << " - ";
 
 					point.x += countrydata.Flag.GetWidth() + 2 /*Padding*/;
+				}
+#else
+				// No country lookup in this build -- ENABLE_IP2COUNTRY is
+				// off by default here, see cmake/options.cmake -- so there
+				// is no country to draw and every peer flies the same
+				// colours. Which is closer to the truth than a flag was:
+				// behind a VPN the country shown was the exit node's.
+				//
+				// The bitmap is fetched once and kept: it is the same for
+				// every row of every client list, and wxArtProvider walks
+				// its provider chain and decodes a PNG on each miss.
+				if (thePrefs::IsGeoIPEnabled()) {
+					static const wxBitmap s_flag =
+						wxArtProvider::GetBitmap("amule:jollyroger");
+
+					if (s_flag.IsOk()) {
+						realY = point.y
+							+ (rect.GetHeight() - s_flag.GetHeight()) / 2;
+
+						dc->DrawBitmap(s_flag, point.x, realY, true);
+
+						point.x += s_flag.GetWidth() + 2 /*Padding*/;
+					}
 				}
 #endif // ENABLE_IP2COUNTRY
 				if (client.GetUserName().IsEmpty()) {

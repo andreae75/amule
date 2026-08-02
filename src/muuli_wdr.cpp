@@ -1814,7 +1814,13 @@ wxSizer *PreferencesGuiTweaksTab( wxWindow *parent, bool call_fit, bool set_size
 
     wxCheckBox *item11 = new wxCheckBox( parent, IDC_VERTTOOLBAR, _("Vertical toolbar orientation"), wxDefaultPosition, wxDefaultSize, 0 );
     item0->Add( item11, wxSizerFlags().Expand().CenterVertical() );
-    wxCheckBox *item12 = new wxCheckBox( parent, IDC_SHOW_COUNTRY_FLAGS, _("Show country flags for clients"), wxDefaultPosition, wxDefaultSize, 0 );
+    // Label changed from upstream's "Show country flags for clients":
+    // this build has no country lookup (ENABLE_IP2COUNTRY is off), so the
+    // same setting now draws one flag for everyone. The control id and
+    // the config key it is bound to are untouched, so an existing config
+    // file carries the setting over.
+    wxCheckBox *item12 = new wxCheckBox( parent, IDC_SHOW_COUNTRY_FLAGS, _("Show a flag for clients"), wxDefaultPosition, wxDefaultSize, 0 );
+    item12->SetToolTip( _("Every peer flies the same colours. There is no country lookup in this build.") );
     item0->Add( item12, wxSizerFlags().Expand().CenterVertical() );
     wxStaticBox *item14 = new wxStaticBox( parent, -1, _("Download Queue Files") );
     wxStaticBoxSizer *item13 = new wxStaticBoxSizer( item14, wxVERTICAL );

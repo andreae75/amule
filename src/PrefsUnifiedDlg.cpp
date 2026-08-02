@@ -667,10 +667,11 @@ bool PrefsUnifiedDlg::TransferToWindow()
 	::SendCheckBoxEvent(this, IDC_ENABLE_PO_OUTGOING);
 	::SendCheckBoxEvent(this, IDC_ENFORCE_PO_INCOMING);
 
-#ifndef ENABLE_IP2COUNTRY
-	CastChild(IDC_SHOW_COUNTRY_FLAGS, wxCheckBox)->Enable(false);
-	thePrefs::SetGeoIPEnabled(false);
-#endif
+	// Upstream greys this out when ENABLE_IP2COUNTRY is off, there being
+	// no database to look a country up in. Here it stays live: with the
+	// lookup compiled out the same setting draws one fixed flag for
+	// every peer instead (see GenericClientListCtrl::DrawClientItem),
+	// which needs no database and no dependency.
 
 #ifdef __GIT__
 	// Version is always shown on the title in development versions
