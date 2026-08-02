@@ -61,6 +61,7 @@
 #include "muuli_wdr.h"				// Needed for ID_BUTTON*
 #include "Preferences.h"			// Needed for CPreferences
 #include "MuleTheme.h"				// Needed for MuleTheme::SetScheme
+#include "DialogGeometry.h"			// Needed for MuleSizeDialog
 
 // wxAuiManager comes in via amuleDlg.h, but framemanager.h only forward-
 // declares the art provider; recolouring it needs the real class.
@@ -150,8 +151,23 @@ protected:
 				const bool handled =
 					wxToolBar::MSWOnNotify(idCtrl, lParam, result);
 
-				const wxColour text =
-					MuleTheme::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+				// A pressed, checked or hot-tracked button keeps the
+				// pale blue fill Windows draws for it: TBCDRF_USECDCOLORS
+				// reaches the text and nothing else. So on those buttons
+				// the label follows the platform rather than the scheme
+				// -- near-black, which is what that pale blue was
+				// designed to carry. The scheme's own white on it is
+				// unreadable, which is what setting clrTextHighlight
+				// alone produced: comctl32 uses that field for hot
+				// items, and takes clrText for a checked one.
+				const UINT state = tbcd->nmcd.uItemState;
+				const bool onNativeFill =
+					(state & (CDIS_CHECKED | CDIS_SELECTED | CDIS_HOT)) != 0;
+
+				const wxColour text = onNativeFill
+					? wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT)
+					: MuleTheme::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+
 				tbcd->clrText =
 					RGB(text.Red(), text.Green(), text.Blue());
 				tbcd->clrTextHighlight = tbcd->clrText;
@@ -912,7 +928,7 @@ class CAboutDialog : public wxDialog
 public:
 	CAboutDialog(wxWindow* parent, const wxString& text)
 		: wxDialog(parent, wxID_ANY, _("About aMule"), wxDefaultPosition,
-			wxSize(580, 460), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+			wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 	{
 		wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -935,6 +951,15 @@ public:
 		copy->Bind(wxEVT_BUTTON, [text](wxCommandEvent& WXUNUSED(evt)) {
 			theApp->CopyTextToClipboard(text);
 		});
+
+		// Built after the main frame handed out its colours, so it has
+		// to ask for them itself.
+		MuleTheme::ApplyToWindowTree(this);
+
+		// No floor: the body is a text control and scrolls, so there is
+		// nothing here that clipping would hide. Opens where and how the
+		// preferences do -- one rule, in DialogGeometry.h.
+		MuleSizeDialog(this);
 	}
 };
 

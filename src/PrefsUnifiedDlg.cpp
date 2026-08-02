@@ -30,7 +30,8 @@
 #include <common/Macros.h>		// Needed for itemsof()
 
 #include <wx/colordlg.h>
-#include <wx/display.h>		// Needed for wxDisplay (clamping the dialog to the screen)
+#include "DialogGeometry.h"	// Needed for MuleSizeDialog
+#include "MuleTheme.h"		// Needed for MuleTheme::ApplyToWindowTree
 #include <wx/progdlg.h>
 #include <wx/stdpaths.h>
 #include <wx/tooltip.h>
@@ -190,12 +191,6 @@ namespace {
 const int PREFS_ROW_GAP_DIP = 6;
 const int PREFS_PAGE_PAD_DIP = 8;
 
-//! The size the dialog opens at, before it is clamped to the screen and
-//! raised to whatever the widest page actually needs. Chosen against a
-//! 1280x768 display -- the smallest we design for -- leaving room for a
-//! task bar and the window's own title bar.
-const int PREFS_PREFERRED_W_DIP = 1000;
-const int PREFS_PREFERRED_H_DIP = 660;
 
 
 /**
@@ -511,29 +506,17 @@ wxDialog(parent, -1, _("Preferences"),
 	wxSize size = GetClientSize();
 	SetSizeHints(size.GetWidth(), size.GetHeight());
 
+	// Everything below this dialog was built after the main frame handed
+	// out its colours, so it has to be asked for them separately.
+	MuleTheme::ApplyToWindowTree(this);
+
 	// Fit() leaves the dialog exactly as large as its tightest page, which
 	// is where the cramped look comes from -- every control ends up against
 	// the frame with nothing to spare, and the pages with the most in them
-	// are the ones that suffer. Keep that as the floor, since it is what
-	// guarantees no page is ever clipped, and open at something roomier.
-	wxSize target = FromDIP(wxSize(PREFS_PREFERRED_W_DIP, PREFS_PREFERRED_H_DIP));
-	target.IncTo(GetSize());
-
-	// Then give the screen the last word. A preferences dialog taller than
-	// the display is worse than a cramped one: the OK button ends up
-	// somewhere below the bottom edge, and on Windows a dialog cannot be
-	// dragged above the top of the screen to get at it.
-	int displayIdx = wxDisplay::GetFromWindow(this);
-	if (displayIdx == wxNOT_FOUND) {
-		displayIdx = 0;
-	}
-	const wxRect usable = wxDisplay(displayIdx).GetClientArea();
-	target.DecTo(usable.GetSize());
-
-	SetSize(target);
-
-	// Position the dialog.
-	Center();
+	// are the ones that suffer. That size goes in as the floor, since it is
+	// what guarantees no page is ever clipped; the shared rule opens the
+	// dialog at something roomier and centres it.
+	MuleSizeDialog(this, GetSize());
 }
 
 
