@@ -32,7 +32,43 @@ date of the version bump commit.
   restart. (`d59c178`)
 - **Banded list rows** on every owner-drawn list, and **status-coloured text**
   in the download list — green only when data is actually arriving, not when a
-  file is merely queued. (`d59c178`)
+  file is merely queued. On dark the band is a deep blue rather than a lighter
+  grey: a brightness step subtle enough not to read as two lists stitched
+  together is also too subtle to survive coloured text drawn on top of it.
+  (`d59c178`)
+- The dark palette is now sampled from a reference theme rather than derived
+  from Qt Fusion. The visible change is that the content is the lightest
+  surface and the chrome recedes behind it, where Fusion had it the other way
+  round. Panels, the toolbar, labels and the log pane follow the scheme too —
+  wxWidgets 3.2 has no application-wide switch, so the colours are pushed down
+  the window tree by hand, to the classes that honour them.
+
+### Changed
+- **Geolocation is off by default and no longer built.** `ENABLE_IP2COUNTRY`
+  now defaults to `OFF` and no build driver, packaging script or CI job turns
+  it back on; libmaxminddb is gone from every dependency list, and the
+  now-unused legacy `libgeoip-dev` went with it from the AppImage image. The
+  country flag beside each peer was decoration that had largely stopped being
+  accurate — behind a VPN or a relay it showed the exit node's country and
+  nobody's own — and it cost a dependency, a database the user has to fetch
+  from MaxMind under an account, and a lookup per connecting client. The
+  feature itself is untouched: `-DENABLE_IP2COUNTRY=YES` still builds it as
+  before.
+- **The flag beside each peer is now the Straw Hat Jolly Roger**, the same one
+  for everyone. It replaces nothing functional — with the country lookup
+  compiled out there was no flag left to draw — and it needs no database. The
+  *Show country flags for clients* setting became *Show a flag for clients*
+  and still turns it off; the config key is unchanged, so an existing
+  `amule.conf` carries the setting over.
+- **The download list's Progress column is one filled bar** instead of eMule's
+  chunk map. The map showed a coloured block per part — blue shaded by source
+  count, red for the parts nobody has — which is more information than any
+  other client puts in that column, and at 170 pixels wide across twenty rows
+  it read as speckle rather than as progress. The per-part detail is still in
+  the file detail dialog and the source counts are still in the Sources
+  column. Side effect: the bar was cached in a per-row bitmap refreshed every
+  five seconds because the map was expensive to draw; a rectangle is not, so
+  the bar is now always in step with the percentage printed on it.
 
 ### Fixed
 - **The preferences dialog was cramped in two ways**: every row sat against the
