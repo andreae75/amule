@@ -1189,7 +1189,15 @@ void CPreferences::BuildItemList( const wxString& appdir )
 	// written before this option existed reads back as.
 	NewCfgItem(IDC_COLOURSCHEME,	(MkCfg_Int( "/SkinGUIOptions/ColourScheme", s_colourScheme, 0 )));
 	NewCfgItem(IDC_VERTTOOLBAR,	(new Cfg_Bool( "/eMule/VerticalToolbar", s_ToolbarOrientation, false )));
-	NewCfgItem(IDC_SHOW_COUNTRY_FLAGS,	(new Cfg_Bool( "/eMule/GeoIPEnabled", s_GeoIPEnabled, true )));
+	// Deliberately not upstream's "/eMule/GeoIPEnabled". Two reasons, and
+	// the second is the one that matters. The name is a misnomer here --
+	// this build has no GeoIP, the setting draws one fixed flag. And the
+	// old key cannot be trusted: until this fork stopped compiling
+	// IP2Country in, PrefsUnifiedDlg forced the value to false on every
+	// construction with the check box greyed out, so any existing config
+	// holds a zero that no user ever chose. A new key starts from the
+	// default instead of from that.
+	NewCfgItem(IDC_SHOW_COUNTRY_FLAGS,	(new Cfg_Bool( "/SkinGUIOptions/ShowClientFlag", s_GeoIPEnabled, true )));
 #ifndef __GIT__
 	NewCfgItem(IDC_SHOWVERSIONONTITLE,	(new Cfg_Bool( "/eMule/ShowVersionOnTitle", s_showVersionOnTitle, false )));
 #endif
