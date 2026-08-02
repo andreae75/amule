@@ -26,6 +26,7 @@
 
 #include <wx/window.h>
 #include <wx/checkbox.h>
+#include <wx/dcclient.h>
 #include <wx/notebook.h>
 #include <wx/panel.h>
 #include <wx/radiobut.h>
@@ -60,6 +61,74 @@ void DisableVisualStyles(wxWindow* window)
 {
 	if (window->GetHandle() != NULL) {
 		::SetWindowTheme(static_cast<HWND>(window->GetHandle()), L"", L"");
+	}
+}
+
+
+//! Draws a group box: a hairline frame, broken for the label.
+//!
+//! A group box gives neither of its two halves up willingly. With visual
+//! styles on, the theme engine paints the label in the system text
+//! colour and ignores the window's -- black on a dark panel. With them
+//! off, the label does follow the window, but the frame becomes the
+//! classic etched edge: a shadow line and a highlight line, drawn from
+//! the system's own 3D colours, of which the dark half vanishes into the
+//! panel and the white half reads as a hard rectangle round every group.
+//!
+//! So neither: this replaces the painting outright. Bound on the
+//! instance rather than done in a wxStaticBox subclass, because the
+//! boxes are created by the hand-maintained layout functions in
+//! muuli_wdr.cpp -- a file shared with upstream, and there are dozens of
+//! them. A dynamically bound handler runs before the class's own and,
+//! by not skipping, takes its place.
+void PaintStaticBox(wxPaintEvent& event)
+{
+	wxStaticBox* const box =
+		wxDynamicCast(event.GetEventObject(), wxStaticBox);
+	if (box == NULL) {
+		event.Skip();
+		return;
+	}
+
+	wxPaintDC dc(box);
+
+	const wxSize size = box->GetSize();
+	const wxColour face = MuleTheme::GetColour(wxSYS_COLOUR_WINDOW);
+
+	dc.SetBackground(wxBrush(face));
+	dc.Clear();
+
+	dc.SetFont(box->GetFont());
+
+	const wxString label = box->GetLabel();
+	wxCoord textW = 0;
+	wxCoord textH = 0;
+	if (!label.IsEmpty()) {
+		dc.GetTextExtent(label, &textW, &textH);
+	}
+
+	// The frame runs through the middle of the label's line, which is
+	// what makes a group box read as a group box rather than as a plain
+	// rectangle with a caption above it.
+	const int top = textH / 2;
+
+	dc.SetPen(wxPen(MuleTheme::GetColour(wxSYS_COLOUR_BTNSHADOW)));
+	dc.SetBrush(*wxTRANSPARENT_BRUSH);
+	dc.DrawRectangle(0, top, size.GetWidth(), size.GetHeight() - top);
+
+	if (!label.IsEmpty()) {
+		// Break the frame where the text goes, with a little air either
+		// side, instead of drawing the label on top of the line.
+		const int inset = 8;
+		const int air = 4;
+
+		dc.SetPen(*wxTRANSPARENT_PEN);
+		dc.SetBrush(wxBrush(face));
+		dc.DrawRectangle(inset - air, top, textW + 2 * air, textH);
+
+		dc.SetTextForeground(MuleTheme::GetColour(box->IsEnabled()
+			? wxSYS_COLOUR_WINDOWTEXT : wxSYS_COLOUR_GRAYTEXT));
+		dc.DrawText(label, inset, 0);
 	}
 }
 #endif
@@ -270,10 +339,17 @@ void ApplyToWindowTree(wxWindow* window)
 	// Controls whose label the theme engine paints for them. They take
 	// the same colours as everything else, but only after their visual
 	// styles are switched off -- see DisableVisualStyles().
+	//
+	// wxStaticBox is not in this list, though its label has the same
+	// problem. Switching its visual styles off does fix the label, but
+	// hands us the classic etched frame instead, which is worse. Its
+	// painting is replaced outright -- see PaintStaticBox() -- so it
+	// needs the colours but not this.
 	const bool themePaintsTheLabel =
 		(wxDynamicCast(window, wxCheckBox) != NULL)
-		|| (wxDynamicCast(window, wxRadioButton) != NULL)
-		|| (wxDynamicCast(window, wxStaticBox) != NULL);
+		|| (wxDynamicCast(window, wxRadioButton) != NULL);
+
+	const bool isStaticBox = (wxDynamicCast(window, wxStaticBox) != NULL);
 
 	if (wxDynamicCast(window, wxTextCtrl) != NULL) {
 		// Content rather than chrome -- the log pane, the search boxes
@@ -282,6 +358,7 @@ void ApplyToWindowTree(wxWindow* window)
 		window->SetOwnBackgroundColour(GetColour(wxSYS_COLOUR_LISTBOX));
 		window->SetOwnForegroundColour(GetColour(wxSYS_COLOUR_LISTBOXTEXT));
 	} else if (themePaintsTheLabel
+			|| isStaticBox
 			|| (wxDynamicCast(window, wxPanel) != NULL)
 			|| (wxDynamicCast(window, wxNotebook) != NULL)
 			|| (wxDynamicCast(window, wxToolBar) != NULL)
@@ -294,6 +371,14 @@ void ApplyToWindowTree(wxWindow* window)
 #ifdef __WINDOWS__
 		if (themePaintsTheLabel) {
 			DisableVisualStyles(window);
+		}
+
+		if (isStaticBox) {
+			// Unbind first: this is idempotent, and the toolbar path
+			// re-runs the walk over a subtree that has already been
+			// through it.
+			window->Unbind(wxEVT_PAINT, &PaintStaticBox);
+			window->Bind(wxEVT_PAINT, &PaintStaticBox);
 		}
 #endif
 	}
