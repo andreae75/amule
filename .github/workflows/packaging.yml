@@ -19,16 +19,20 @@ on:
   # the PR branch from the Actions UI. This avoids the double-fire of
   # "fires on PR open AND on merge" which is the most expensive shape.
   # Path filter ensures doc-only commits don't burn CI either.
-  push:
-    branches:
-      - master
-      - 'packaging**'
-    paths:
-      - 'packaging/**'
-      - '.github/workflows/packaging.yml'
-      - 'src/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
+  #
+  # The push trigger is off with the rest of CI in this fork -- see
+  # ccpp.yml. workflow_dispatch below still works, which is how a
+  # package gets built for now.
+  # push:
+  #   branches:
+  #     - master
+  #     - 'packaging**'
+  #   paths:
+  #     - 'packaging/**'
+  #     - '.github/workflows/packaging.yml'
+  #     - 'src/**'
+  #     - 'CMakeLists.txt'
+  #     - 'cmake/**'
   workflow_dispatch:
     inputs:
       only:

@@ -1,10 +1,15 @@
 name: I18n CI
 
 on:
-  push:
-    branches: [ "**" ]
-  pull_request:
-    branches: [ "**" ]
+  # Off with the rest of CI in this fork -- see ccpp.yml. Note that this
+  # one is the catalog drift gate, not a build: with it off, nothing
+  # will tell you that a changed translatable string needs
+  # ./scripts/update-po.sh run and the result committed.
+  workflow_dispatch:
+  # push:
+  #   branches: [ "**" ]
+  # pull_request:
+  #   branches: [ "**" ]
 
 permissions:
   contents: read

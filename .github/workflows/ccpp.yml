@@ -1,10 +1,15 @@
 name: C/C++ CI
 
 on:
-  push:
-    branches: [ "**" ]
-  pull_request:
-    branches: [ "**" ]
+  # Automatic runs are off in this fork for now: the builds fail and
+  # nobody is looking at them yet, so every push was producing a red
+  # cross that means nothing. Runnable on demand from the Actions tab
+  # until then. To turn it back on, uncomment the two triggers below.
+  workflow_dispatch:
+  # push:
+  #   branches: [ "**" ]
+  # pull_request:
+  #   branches: [ "**" ]
 
 permissions:
   contents: read
