@@ -58,8 +58,14 @@ date of the version bump commit.
   for everyone. It replaces nothing functional — with the country lookup
   compiled out there was no flag left to draw — and it needs no database. The
   *Show country flags for clients* setting became *Show a flag for clients*
-  and still turns it off; the config key is unchanged, so an existing
-  `amule.conf` carries the setting over.
+  and still turns it off. It is stored under a new key
+  (`/SkinGUIOptions/ShowClientFlag`) rather than upstream's
+  `/eMule/GeoIPEnabled`, because the old one cannot be trusted: until this
+  fork stopped building IP2Country, the preferences dialog forced that value
+  to false on every construction with the check box greyed out, so an
+  existing `amule.conf` holds a zero nobody chose. The flag shows in the peer
+  lists — sources under a download, clients under a shared file — which is
+  where the country flag used to be.
 - **The download list's Progress column is one filled bar** instead of eMule's
   chunk map. The map showed a coloured block per part — blue shaded by source
   count, red for the parts nobody has — which is more information than any
