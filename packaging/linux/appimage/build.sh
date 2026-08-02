@@ -46,8 +46,7 @@ cmake -B "${BUILD_DIR}" -S "${REPO}" -G Ninja \
     -DBUILD_WXCAS=YES \
     -DBUILD_ALC=YES \
     -DBUILD_ALCC=YES \
-    -DENABLE_NLS=YES \
-    -DENABLE_IP2COUNTRY=YES
+    -DENABLE_NLS=YES
 
 cmake --build "${BUILD_DIR}" -j"$(nproc)"
 

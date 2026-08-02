@@ -164,7 +164,16 @@ if (NEED_LIB_MULECOMMON)
 endif()
 
 if (NEED_LIB_MULEAPPCOMMON)
-	option (ENABLE_IP2COUNTRY "compile with GeoIP IP2Country library")
+	# Off by default in this fork, and no build driver here turns it back
+	# on. It resolves every peer's IP against a MaxMind database to put a
+	# country flag next to it — a decoration, and one that has largely
+	# stopped being true: a peer behind a VPN or a relay reports the exit
+	# node's country, not anyone's. What it costs is a libmaxminddb
+	# dependency, a database the user has to fetch from MaxMind with an
+	# account, and a lookup on every client that connects. The feature
+	# itself is untouched; -DENABLE_IP2COUNTRY=YES still builds it exactly
+	# as before.
+	option (ENABLE_IP2COUNTRY "compile with GeoIP IP2Country library" OFF)
 	option (ENABLE_MMAP "enable using mapped memory if supported")
 	option (ENABLE_NLS "enable national language support" ON)
 	set (NEED_LIB_MULEAPPCORE TRUE)

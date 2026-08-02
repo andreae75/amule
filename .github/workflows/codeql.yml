@@ -33,7 +33,6 @@ env:
     libcrypto++-dev \
     libgd-dev \
     libglib2.0-dev \
-    libmaxminddb-dev \
     libreadline-dev \
     libwxgtk3.2-dev \
     pkg-config \
@@ -54,9 +53,6 @@ env:
     -DBUILD_TESTING=YES \
     -DBUILD_WEBSERVER=YES \
     -DENABLE_NLS=YES
-
-  cmake_ubuntu_config_flags: |-
-    -DENABLE_IP2COUNTRY=YES
 
 jobs:
   analyze:
@@ -145,8 +141,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ${{ env.cmake_ubuntu_deps }}
           cmake \
-            ${{ env.cmake_common_config_flags }} \
-            ${{ env.cmake_ubuntu_config_flags }}
+            ${{ env.cmake_common_config_flags }}
           cmake --build build
 
       - name: Perform CodeQL Analysis

@@ -22,7 +22,7 @@ the standard C library on most GNU systems.
 | -------------------------- | ------- | ------------------------------------------------------------------------ |
 | `libgd`                    | 2.0.0   | statistics images in `cas`                                               |
 | `libupnp`                  | 1.6.6   | UPnP port forwarding — off by default, see `ENABLE_UPNP` below            |
-| `libmaxminddb`             | 1.0     | country flags + IP→country mapping ([docs/IP2Country.md](IP2Country.md)) |
+| `libmaxminddb`             | 1.0     | country flags — off by default, see `ENABLE_IP2COUNTRY` below            |
 | `gettext`                  | 0.11.5  | native-language support (NLS)                                            |
 | `libayatana-appindicator3` | —       | **Linux only.** StatusNotifierItem tray icon                             |
 
@@ -132,6 +132,15 @@ Common `-D` options (`YES` / `NO`):
 | `ENABLE_NLS`         | YES     | native-language support (gettext)                                |
 | `ENABLE_UPNP`        | NO      | UPnP port forwarding — see the note below                        |
 | `ENABLE_IP2COUNTRY`  | NO      | libmaxminddb country flags ([docs/IP2Country.md](IP2Country.md)) |
+
+`ENABLE_IP2COUNTRY` is off by default in this fork, and no build driver or CI
+job turns it back on. It resolves every peer's address against a MaxMind
+database to show a country flag beside it — decoration, and decoration that has
+largely stopped being accurate: a peer behind a VPN or a relay reports the exit
+node's country and nobody's own. The cost is a libmaxminddb dependency, a
+database the user has to fetch from MaxMind under an account, and a lookup per
+connecting client. The feature itself is untouched: `-DENABLE_IP2COUNTRY=YES`
+builds it exactly as before, provided libmaxminddb is installed.
 
 `ENABLE_UPNP` is off by default in this fork, and no build driver or CI job
 turns it back on. UPnP is one convenience — asking the router to open a port —

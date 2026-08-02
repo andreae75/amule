@@ -105,8 +105,7 @@ build() {
         -DBUILD_WXCAS=YES \
         -DBUILD_ALC=YES \
         -DBUILD_ALCC=YES \
-        -DBUILD_TESTING=NO \
-        -DENABLE_IP2COUNTRY=YES
+        -DBUILD_TESTING=NO
 
     echo "==> Building"
     cmake --build "${BUILD_DIR}" -j"$(nproc)"

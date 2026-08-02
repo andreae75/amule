@@ -86,8 +86,7 @@ build() {
         -DBUILD_ALC=YES \
         -DBUILD_ALCC=YES \
         -DBUILD_TESTING=NO \
-        -DENABLE_NLS=YES \
-        -DENABLE_IP2COUNTRY=YES
+        -DENABLE_NLS=YES
 
     echo "==> Building"
     cmake --build "${BUILD_DIR}" -j"$(sysctl -n hw.ncpu)"

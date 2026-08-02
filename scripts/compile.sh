@@ -88,8 +88,7 @@ cmake_configure () {
 		-DBUILD_REMOTEGUI=YES \
 		-DBUILD_TESTING=YES \
 		-DBUILD_WEBSERVER=YES \
-		-DENABLE_NLS=YES \
-		-DENABLE_IP2COUNTRY=YES
+		-DENABLE_NLS=YES
 
 	die 22 "CMake configuration failed"
 }

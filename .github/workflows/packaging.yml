@@ -233,7 +233,7 @@ jobs:
           BREW=${{ matrix.brew_prefix }}/bin/brew
           ${{ matrix.archcmd }} $BREW update
           ${{ matrix.archcmd }} $BREW install --quiet \
-              cmake wxwidgets cryptopp gd gettext boost dylibbundler libmaxminddb \
+              cmake wxwidgets cryptopp gd gettext boost dylibbundler \
               ccache
           # Prepend the matrix-selected brew prefix to PATH so every
           # `brew --prefix` / `cmake` / `pkg-config` invocation in the
@@ -431,7 +431,6 @@ jobs:
             ${{ matrix.pkg_prefix }}-crypto++
             ${{ matrix.pkg_prefix }}-gettext
             ${{ matrix.pkg_prefix }}-libgd
-            ${{ matrix.pkg_prefix }}-libmaxminddb
             ${{ matrix.pkg_prefix }}-make
             ${{ matrix.pkg_prefix }}-pkgconf
             ${{ matrix.pkg_prefix }}-readline

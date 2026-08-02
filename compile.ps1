@@ -169,9 +169,9 @@ if ($Bootstrap) {
     Write-Host '==> Installazione dipendenze MSYS2 (puo'' richiedere parecchi minuti)' -ForegroundColor Yellow
 
     # Set minimo per amule.exe, derivato da cmake_mingw_w64_deps in
-    # .github/workflows/ccpp.yml. libgd / libmaxminddb / readline servono
-    # solo a cas, ENABLE_IP2COUNTRY e amulecmd/amuleweb: inclusi solo con
-    # -All per non scaricare inutilmente.
+    # .github/workflows/ccpp.yml. libgd / readline servono solo a cas e a
+    # amulecmd/amuleweb: inclusi solo con -All per non scaricare
+    # inutilmente.
     $packages = @(
         'mingw-w64-x86_64-toolchain'
         'mingw-w64-x86_64-cmake'
@@ -188,7 +188,6 @@ if ($Bootstrap) {
     if ($All) {
         $packages += @(
             'mingw-w64-x86_64-libgd'
-            'mingw-w64-x86_64-libmaxminddb'
             'mingw-w64-x86_64-readline'
         )
     }
@@ -256,7 +255,6 @@ if ($All) {
         '-DBUILD_ALCC=YES'
         '-DBUILD_WXCAS=YES'
         '-DBUILD_TESTING=YES'
-        '-DENABLE_IP2COUNTRY=YES'
     )
 } else {
     $cmakeFlags += '-DBUILD_TESTING=NO'

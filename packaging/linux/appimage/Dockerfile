@@ -33,12 +33,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libboost-dev \
         libcrypto++-dev \
         libgd-dev \
-        libgeoip-dev \
-        # libmaxminddb: enables IP2Country (country flag lookup) when
-        # the user supplies their own GeoLite2-Country.mmdb at runtime.
-        # We don't ship the database — MaxMind's licence forbids
-        # redistribution; users drop it in ~/.aMule/.
-        libmaxminddb-dev \
         libreadline-dev \
         # libcurl: backend for wxWebRequest, which aMule's HTTP path requires.
         libcurl4-openssl-dev \

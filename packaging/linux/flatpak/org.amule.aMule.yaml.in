@@ -247,24 +247,6 @@ modules:
         url: https://github.com/AyatanaIndicators/libayatana-appindicator/archive/refs/tags/0.5.94.tar.gz
         sha256: 884a6bc77994c0b58c961613ca4c4b974dc91aa0f804e70e92f38a542d0d0f90
 
-  # libmaxminddb — enables aMule's IP2Country feature (country flag
-  # lookup in client lists / search results / transfers). The matching
-  # GeoLite2-Country.mmdb database is NOT shipped: MaxMind's licence
-  # forbids redistribution, and the file changes monthly. Users drop
-  # their own copy into the Flatpak's per-app data dir at runtime,
-  # which lives at ~/.var/app/org.amule.aMule/data/.aMule/ on the
-  # host. Without the .mmdb the feature stays inert; the lib being
-  # built in is what allows the on-disk database to be picked up.
-  - name: libmaxminddb
-    buildsystem: autotools
-    config-opts:
-      - --disable-static
-      - --disable-tests
-    sources:
-      - type: archive
-        url: https://github.com/maxmind/libmaxminddb/releases/download/1.13.3/libmaxminddb-1.13.3.tar.gz
-        sha256: a66502ea76eadbe17f2cd6fd708946777253972d2ae8157dee1b23a2fb528171
-
   - name: wxwidgets
     buildsystem: autotools
     config-opts:
@@ -302,7 +284,6 @@ modules:
       - -DBUILD_ALC=YES
       - -DBUILD_ALCC=YES
       - -DENABLE_NLS=YES
-      - -DENABLE_IP2COUNTRY=YES
     # AMULE_REVISION (in versions.env) controls what gets built:
     #   - "master" or another branch -> branch: <name> at flatpak-builder time
     #   - a release tag like "2.3.3" -> branch: <tag-name> works because flatpak's
