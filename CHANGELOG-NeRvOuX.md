@@ -14,36 +14,46 @@ The fork version (`AMULE_FORK_VERSION`) is display-only and never goes out on
 the network — see [Network identity](README.md#network-identity). Dates are the
 date of the version bump commit.
 
-## Unreleased
-
-> The colour scheme below is in but not yet tested beyond a first look —
-> treat it as provisional until it has had some use.
+## 0.5.0 — 2026-08-02
 
 ### Added
 - **A light / dark / system colour scheme**, in Preferences → Interface.
   Defaults to System, which is also what a config file written before the
-  option existed reads back as. The dark values are the canonical Qt Fusion
-  ones. Lists, column headers, panels, graphs, the AUI pane chrome and the
-  Windows title bar all follow it; **menus, combo dropdowns, checkbox glyphs
-  and native scrollbars do not** — those are drawn by the OS theme and
-  wxWidgets 3.2 has no hook to override them. wx 3.3 adds one
-  (`MSWEnableDarkMode`), and when it reaches a stable series it goes behind a
-  version guard driven by this same option. Changing the scheme asks for a
-  restart. (`d59c178`)
+  option existed reads back as. The dark palette is sampled pixel by pixel
+  from a reference theme rather than derived from a formula: the content is
+  the lightest surface and the chrome recedes behind it. Lists, banded rows,
+  column headers, panels, the toolbar, labels, the log pane, graphs, the AUI
+  pane chrome and the Windows title bar follow it. **Menus, group box frames,
+  combo dropdowns and native scrollbars do not** — those are painted by the
+  OS theme, and wxWidgets 3.2 has no application-wide hook to redirect it, so
+  the colours are pushed down the window tree by hand to the classes that
+  honour them. wx 3.3 adds `MSWEnableDarkMode`; when it reaches a stable
+  series it goes behind a version guard driven by this same option. Changing
+  the scheme asks for a restart. (`d59c178`, `1dbe89f`)
 - **Banded list rows** on every owner-drawn list, and **status-coloured text**
   in the download list — green only when data is actually arriving, not when a
   file is merely queued. On dark the band is a deep blue rather than a lighter
   grey: a brightness step subtle enough not to read as two lists stitched
   together is also too subtle to survive coloured text drawn on top of it.
-  (`d59c178`)
-- The dark palette is now sampled from a reference theme rather than derived
-  from Qt Fusion. The visible change is that the content is the lightest
-  surface and the chrome recedes behind it, where Fusion had it the other way
-  round. Panels, the toolbar, labels and the log pane follow the scheme too —
-  wxWidgets 3.2 has no application-wide switch, so the colours are pushed down
-  the window tree by hand, to the classes that honour them.
+  (`d59c178`, `1dbe89f`)
+- **Copy the selection on every list.** The clipboard export written for the
+  download list moved into `CMuleListCtrl`, so shared files and search results
+  have it too — plain text, CSV, JSON, HTML, and Ctrl+C. JSON keys are spelled
+  out per list so a language change can't rename them. (`5f2adcb`)
+- **A real About dialog** instead of a message box: selectable text, a **Copy**
+  button, and a build block — wxWidgets compile-time *and* run-time, compiler,
+  zlib, build date, config/temp/incoming paths, OS. It opens at the size and
+  position the preferences do, from one shared rule rather than two constants
+  that happen to match. (`5f2adcb`, `fc1a669`)
 
 ### Changed
+- **UPnP is off by default and no longer built.** `ENABLE_UPNP` now defaults to
+  `OFF`, and no build driver, packaging script or CI job turns it back on;
+  libupnp and libixml are gone from every dependency list. UPnP buys one
+  convenience — asking the router to open a port — and pays for it with an
+  XML/HTTP stack that parses SSDP announcements and device descriptions from
+  anything on the local network. The feature itself is untouched:
+  `-DENABLE_UPNP=YES` still builds it as before. (`6afe9b3`)
 - **Geolocation is off by default and no longer built.** `ENABLE_IP2COUNTRY`
   now defaults to `OFF` and no build driver, packaging script or CI job turns
   it back on; libmaxminddb is gone from every dependency list, and the
@@ -53,7 +63,7 @@ date of the version bump commit.
   nobody's own — and it cost a dependency, a database the user has to fetch
   from MaxMind under an account, and a lookup per connecting client. The
   feature itself is untouched: `-DENABLE_IP2COUNTRY=YES` still builds it as
-  before.
+  before. (`ca0f79e`)
 - **The flag beside each peer is now the Straw Hat Jolly Roger**, the same one
   for everyone. It replaces nothing functional — with the country lookup
   compiled out there was no flag left to draw — and it needs no database. The
@@ -65,7 +75,7 @@ date of the version bump commit.
   to false on every construction with the check box greyed out, so an
   existing `amule.conf` holds a zero nobody chose. The flag shows in the peer
   lists — sources under a download, clients under a shared file — which is
-  where the country flag used to be.
+  where the country flag used to be. (`0aa8dcb`, `7c3eb6c`)
 - **The download list's Progress column is one filled bar** instead of eMule's
   chunk map. The map showed a coloured block per part — blue shaded by source
   count, red for the parts nobody has — which is more information than any
@@ -74,7 +84,7 @@ date of the version bump commit.
   the file detail dialog and the source counts are still in the Sources
   column. Side effect: the bar was cached in a per-row bitmap refreshed every
   five seconds because the map was expensive to draw; a rectangle is not, so
-  the bar is now always in step with the percentage printed on it.
+  the bar is now always in step with the percentage printed on it. (`fa9b5be`)
 
 ### Fixed
 - **The preferences dialog was cramped in two ways**: every row sat against the
@@ -83,24 +93,27 @@ date of the version bump commit.
   walking each page's sizer tree rather than by editing fifteen layout
   functions in a file shared with upstream. The dialog opens at 1000×660 DIP,
   floored by what the widest page needs and capped by the screen. (`3ee602e`)
+- **Toolbar labels were unreadable on the dark scheme**, and so were check box
+  and radio button labels. The native controls paint their own text in the
+  system colour and never look at the window's: the toolbar needs
+  `NM_CUSTOMDRAW` with `TBCDRF_USECDCOLORS`, and it has to read `uItemState`
+  so a checked button — whose pale blue fill Windows still draws — keeps a
+  dark label rather than a white one on blue. Check boxes and radio buttons
+  have their visual styles switched off per control so they fall back to
+  classic drawing, which takes the colour from the device context.
+  (`1dbe89f`, `fc1a669`)
 
-### Changed
-- **UPnP is off by default and no longer built.** `ENABLE_UPNP` now defaults to
-  `OFF`, and no build driver, packaging script or CI job turns it back on;
-  libupnp and libixml are gone from every dependency list. UPnP buys one
-  convenience — asking the router to open a port — and pays for it with an
-  XML/HTTP stack that parses SSDP announcements and device descriptions from
-  anything on the local network. The feature itself is untouched:
-  `-DENABLE_UPNP=YES` still builds it as before. (`6afe9b3`)
-
-### Added
-- **Copy the selection on every list.** The clipboard export written for the
-  download list moved into `CMuleListCtrl`, so shared files and search results
-  have it too — plain text, CSV, JSON, HTML, and Ctrl+C. JSON keys are spelled
-  out per list so a language change can't rename them. (`5f2adcb`)
-- **A real About dialog** instead of a message box: selectable text, a **Copy**
-  button, and a build block — wxWidgets compile-time *and* run-time, compiler,
-  zlib, build date, config/temp/incoming paths, OS. (`5f2adcb`)
+### Known issues
+- **Group box frames and their labels are still native**, which on the dark
+  scheme means a light frame and dark caption. Taking over the painting was
+  tried and reverted (`40b02f5`): `wxStaticBox` computes a paint region that
+  excludes the controls sitting inside the group, and replacing its paint
+  handler loses that, so the box paints over its own contents and they come
+  back only when something else invalidates them. The supported way through
+  is a subclass overriding `PaintForeground()`.
+- **The menu bar follows Windows, not the scheme.** It is drawn in the frame's
+  non-client area and is not a window a colour can be set on; reaching it
+  means the undocumented `WM_UAHDRAWMENU` messages.
 
 ## 0.4.0 — 2026-08-01
 
