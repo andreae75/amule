@@ -31,7 +31,6 @@
 #include <common/Format.h>	// Needed for CFormat
 #include "amule.h"		// Needed for theApp
 #include "amuleDlg.h"		// Needed for CamuleDlg
-#include "BarShader.h"		// Needed for CBarShader
 #include "CommentDialogLst.h"	// Needed for CCommentDialogLst
 #include "DataToText.h"		// Needed for PriorityToStr
 #include "DownloadQueue.h"
@@ -45,6 +44,7 @@
 #include "TerminationProcess.h"	// Needed for CTerminationProcess
 #include "TransferWnd.h"
 #include "SourceListCtrl.h"
+#include "MuleColour.h"		// Needed for CMuleColour
 #include "MuleTheme.h"			// Needed for MuleTheme::GetColour
 
 class CPartFile;
@@ -53,14 +53,8 @@ class CPartFile;
 struct FileCtrlItem_Struct
 {
 	FileCtrlItem_Struct()
-		: dwUpdated(0),
-		  status(NULL),
-		  m_fileValue(NULL)
+		: m_fileValue(NULL)
 	{ }
-
-	~FileCtrlItem_Struct() {
-		delete status;
-	}
 
 	CPartFile* GetFile() const {
 		return m_fileValue;
@@ -69,9 +63,6 @@ struct FileCtrlItem_Struct
 	void SetContents(CPartFile* file) {
 		m_fileValue = file;
 	}
-
-	uint64		dwUpdated;
-	wxBitmap*	status;
 
 private:
 	CPartFile*			m_fileValue;
@@ -282,8 +273,6 @@ void CDownloadListCtrl::UpdateItem(const void* toupdate)
 
 		if ( index > -1 ) {
 			if ( show ) {
-				item->dwUpdated = 0;
-
 				// Only update visible lines
 				if ( index >= first && index <= last) {
 					RefreshItem( index );
@@ -1011,69 +1000,60 @@ void CDownloadListCtrl::DrawFileItem( wxDC* dc, int nColumn, const wxRect& rect,
 			break;
 		}
 
-		// Progress. A bitmap, with the percentage painted over it.
-		case ColumnProgress:{
-			if (thePrefs::ShowProgBar()) {
-				int iWidth  = rect.GetWidth() - 2;
-				int iHeight = rect.GetHeight() - 2;
+		// Progress: a bar filled to the completed share, with the
+		// percentage centred over it.
+		//
+		// This used to render into a per-item wxBitmap refreshed at most
+		// once every five seconds, because the chunk map it drew walked
+		// the gap list and the per-part source frequencies -- too much
+		// to redo on every paint. A single filled rectangle costs
+		// nothing, so the bitmap, its cache and its staleness window are
+		// gone; the bar is now always current instead of up to five
+		// seconds behind the percentage printed on it.
+		case ColumnProgress: {
+			if (!thePrefs::ShowProgBar()) {
+				break;
+			}
 
-				// DO NOT DRAW IT ALL THE TIME
-				uint64 dwTicks = GetTickCount64();
+			const wxRect bar(rect.GetX(), rect.GetY() + 1,
+				rect.GetWidth(), rect.GetHeight() - 2);
 
-				wxMemoryDC cdcStatus;
+			const int filled = DrawFileStatusBar(file, dc, bar,
+				thePrefs::UseFlatBar());
 
-				if (item->dwUpdated < dwTicks || file->GetHashingProgress() > 0
-						|| !item->status || iWidth != item->status->GetWidth()) {
-					if ( item->status == NULL) {
-						item->status = new wxBitmap(iWidth, iHeight);
-					} else if ( item->status->GetWidth() != iWidth ) {
-						// Only recreate if the size has changed
-						item->status->Create(iWidth, iHeight);
-					}
+			if (thePrefs::ShowPercent()) {
+				const wxString buffer = GetFileCellText(file, ColumnProgress);
 
-					cdcStatus.SelectObject( *item->status );
+				wxCoord textwidth, textheight;
+				dc->GetTextExtent(buffer, &textwidth, &textheight);
 
-					if ( thePrefs::UseFlatBar() ) {
-						DrawFileStatusBar( file, &cdcStatus,
-							wxRect(0, 0, iWidth, iHeight), true);
-					} else {
-						DrawFileStatusBar( file, &cdcStatus,
-							wxRect(1, 1, iWidth - 2, iHeight - 2), false);
+				const int tx = bar.x + ((bar.width - textwidth) >> 1);
+				const int ty = rect.GetY() + ((rect.GetHeight() - textheight) >> 1);
 
-						// Draw black border
-						cdcStatus.SetPen( *wxBLACK_PEN );
-						cdcStatus.SetBrush( *wxTRANSPARENT_BRUSH );
-						cdcStatus.DrawRectangle( 0, 0, iWidth, iHeight );
-					}
+				// The label straddles the end of the fill, so it is
+				// drawn twice, each pass clipped to one side: white over
+				// the bar, the row's own foreground over the background
+				// beyond it. A single colour cannot do both -- white on
+				// an unfilled row is invisible in a light scheme, and
+				// the row colour on the blue is not much better.
+				const wxColour saved = dc->GetTextForeground();
 
-					item->dwUpdated = dwTicks + 5000; // Plus five seconds
-				} else {
-					cdcStatus.SelectObject( *item->status );
-				}
+				dc->DestroyClippingRegion();
+				dc->SetClippingRegion(wxRect(bar.x, rect.GetY(),
+					filled, rect.GetHeight()));
+				dc->SetTextForeground(*wxWHITE);
+				dc->DrawText(buffer, tx, ty);
 
-				dc->Blit( rect.GetX(), rect.GetY() + 1, iWidth, iHeight, &cdcStatus, 0, 0);
+				dc->DestroyClippingRegion();
+				dc->SetClippingRegion(wxRect(bar.x + filled, rect.GetY(),
+					bar.width - filled, rect.GetHeight()));
+				dc->SetTextForeground(saved);
+				dc->DrawText(buffer, tx, ty);
 
-				if (thePrefs::ShowPercent()) {
-					// Percentage of completing or hashing
-					const uint16 hashingProgress = file->GetHashingProgress();
-					wxString buffer = GetFileCellText(file, ColumnProgress);
-					int middlex = (2*rect.GetX() + rect.GetWidth()) >> 1;
-					int middley = (2*rect.GetY() + rect.GetHeight()) >> 1;
-
-					wxCoord textwidth, textheight;
-
-					dc->GetTextExtent(buffer, &textwidth, &textheight);
-					wxColour AktColor = dc->GetTextForeground();
-					// Ordinary progress bar: white percentage
-					// Hashing progressbar (green/yellow): black percentage
-					if (thePrefs::ShowProgBar() && hashingProgress == 0) {
-						dc->SetTextForeground(*wxWHITE);
-					} else {
-						dc->SetTextForeground(*wxBLACK);
-					}
-					dc->DrawText(buffer, middlex - (textwidth >> 1), middley - (textheight >> 1));
-					dc->SetTextForeground(AktColor);
-				}
+				// Hand the cell clip back to the wxDCClipper that owns
+				// it, which is about to destroy it again on the way out.
+				dc->DestroyClippingRegion();
+				dc->SetClippingRegion(rect);
 			}
 
 			break;
@@ -1404,141 +1384,87 @@ void CDownloadListCtrl::ShowFilesCount( int diff )
 }
 
 
-static const CMuleColour crHave(104, 104, 104);
-static const CMuleColour crFlatHave(0, 0, 0);
+// Hashing is not downloading and does not get the download colour: the
+// file is being read off the local disk and nothing is on the wire. Amber
+// says "busy, but not with the network".
+static const CMuleColour crHashingTop(255, 190, 40);
+static const CMuleColour crHashingBottom(214, 158, 30);
 
-static const CMuleColour crPending(255, 208, 0);
-static const CMuleColour crFlatPending(255, 255, 100);
-
-static const CMuleColour crProgress(0, 224, 0);
-static const CMuleColour crFlatProgress(0, 150, 0);
-
-static const CMuleColour crMissing(255, 0, 0);
-
-void CDownloadListCtrl::DrawFileStatusBar(
+int CDownloadListCtrl::DrawFileStatusBar(
 	const CPartFile* file, wxDC* dc, const wxRect& rect, bool bFlat ) const
 {
-	static CBarShader s_ChunkBar(16);
+	// One bar, filled to the completed share.
+	//
+	// What used to be here was eMule's chunk map: one coloured block per
+	// part, blue shaded by how many sources hold it, red for the parts
+	// nobody has, grey for what is already down, yellow for what is in
+	// flight. It is more information than any other client puts in this
+	// column, and that is also the problem -- at 170 pixels wide and
+	// twenty rows deep it is a wall of red and blue speckle that has to
+	// be read part by part, and the question this column is actually
+	// asked ("how far along is it?") gets no easier to answer for it.
+	//
+	// The per-part detail is not gone from the program: it is what the
+	// file detail dialog is for, and the source counts stay in the
+	// Sources column. This is the summary, drawn as a summary.
+	const uint16 hashingProgress = file->GetHashingProgress();
 
-	s_ChunkBar.SetHeight(rect.height);
-	s_ChunkBar.SetWidth(rect.width);
-	s_ChunkBar.SetFileSize( file->GetFileSize() );
-	s_ChunkBar.Set3dDepth( thePrefs::Get3DDepth() );
-
-	if ( file->IsCompleted() || file->GetStatus() == PS_COMPLETING ) {
-		s_ChunkBar.Fill( bFlat ? crFlatProgress : crProgress );
-		s_ChunkBar.Draw(dc, rect.x, rect.y, bFlat);
-		return;
-	} else if (file->GetHashingProgress() > 0) {
-		uint64 left = file->GetHashingProgress() * PARTSIZE;
-		if (left < file->GetFileSize() - 1) {
-			// Fill the amount not yet hashed with yellow
-			s_ChunkBar.FillRange(left + 1, file->GetFileSize() - 1, bFlat ? crFlatPending : crPending);
-		} else {
-			left = file->GetFileSize() - 1;
-		}
-	    // Fill the amount already hashed with green
-	    s_ChunkBar.FillRange(0, left, bFlat ? crFlatProgress : crProgress);
-		s_ChunkBar.Draw(dc, rect.x, rect.y, bFlat);
-		return;
-	}
-	// Part availability ( of missing parts )
-	const CGapList& gaplist = file->GetGapList();
-	CGapList::const_iterator it = gaplist.begin();
-	uint64 lastGapEnd = 0;
-	CMuleColour colour;
-
-	for (; it != gaplist.end(); ++it) {
-
-		// Start position
-		uint32 start = ( it.start() / PARTSIZE );
-		// fill the Have-Part (between this gap and the last)
-		if (it.start()) {
-		  s_ChunkBar.FillRange(lastGapEnd + 1, it.start() - 1,  bFlat ? crFlatHave : crHave);
-		}
-		lastGapEnd = it.end();
-		// End position
-		uint32 end   = ( it.end() / PARTSIZE ) + 1;
-
-		// Avoid going past the filesize. Dunno if this can happen, but the old code did check.
-		if ( end > file->GetPartCount() ) {
-			end = file->GetPartCount();
-		}
-
-		// Place each gap, one PART at a time
-		for ( uint64 i = start; i < end; ++i ) {
-			if ( i < file->m_SrcpartFrequency.size() && file->m_SrcpartFrequency[i]) {
-				int blue = 210 - ( 22 * ( file->m_SrcpartFrequency[i] - 1 ) );
-				colour.Set(0, ( blue < 0 ? 0 : blue ), 255 );
-			} else {
-				colour = crMissing;
-			}
-
-			if ( file->IsStopped() ) {
-				colour.Blend(50);
-			}
-
-			uint64 gap_begin = ( i == start   ? it.start() : PARTSIZE * i );
-			uint64 gap_end   = ( i == end - 1 ? it.end()   : PARTSIZE * ( i + 1 ) - 1 );
-
-			s_ChunkBar.FillRange( gap_begin, gap_end,  colour);
-		}
-	}
-
-	// fill the last Have-Part (between this gap and the last)
-	s_ChunkBar.FillRange(lastGapEnd + 1, file->GetFileSize() - 1,  bFlat ? crFlatHave : crHave);
-
-	// Pending parts
-	const CPartFile::CReqBlockPtrList& requestedblocks_list = file->GetRequestedBlockList();
-	CPartFile::CReqBlockPtrList::const_iterator it2 = requestedblocks_list.begin();
-	// adjacing pending parts must be joined to avoid bright lines between them
-	uint64 lastStartOffset = 0;
-	uint64 lastEndOffset = 0;
-
-	colour = bFlat ? crFlatPending : crPending;
-
-	if ( file->IsStopped() ) {
-		colour.Blend(50);
-	}
-
-	for (; it2 != requestedblocks_list.end(); ++it2) {
-
-		if ((*it2)->StartOffset > lastEndOffset + 1) {
-			// not adjacing, draw last block
-			s_ChunkBar.FillRange(lastStartOffset, lastEndOffset, colour);
-			lastStartOffset = (*it2)->StartOffset;
-			lastEndOffset   = (*it2)->EndOffset;
-		} else {
-			// adjacing, grow block
-			lastEndOffset   = (*it2)->EndOffset;
-		}
-	}
-
-	s_ChunkBar.FillRange(lastStartOffset, lastEndOffset, colour);
-
-
-	// Draw the progress-bar
-	s_ChunkBar.Draw( dc, rect.x, rect.y, bFlat );
-
-
-	// Green progressbar width
-	int width = (int)(( (float)rect.width / (float)file->GetFileSize() ) *
-			file->GetCompletedSize() );
-
-	if ( bFlat ) {
-		dc->SetBrush( crFlatProgress.GetBrush() );
-
-		dc->DrawRectangle( rect.x, rect.y, width, 3 );
+	double percent;
+	if (hashingProgress > 0) {
+		percent = 100.0 * hashingProgress * PARTSIZE / file->GetFileSize();
+	} else if (file->IsCompleted() || file->GetStatus() == PS_COMPLETING) {
+		percent = 100.0;
 	} else {
-		// Draw the two black lines for 3d-effect
-		dc->SetPen( *wxBLACK_PEN );
-		dc->DrawLine( rect.x, rect.y + 0, rect.x + width, rect.y + 0 );
-		dc->DrawLine( rect.x, rect.y + 2, rect.x + width, rect.y + 2 );
-
-		// Draw the green line
-		dc->SetPen( *(wxThePenList->FindOrCreatePen( crProgress , 1, wxPENSTYLE_SOLID ) ));
-		dc->DrawLine( rect.x, rect.y + 1, rect.x + width, rect.y + 1 );
+		percent = file->GetPercentCompleted();
 	}
+
+	if (percent <= 0.0) {
+		return 0;
+	}
+	if (percent > 100.0) {
+		percent = 100.0;
+	}
+
+	int width = (int)((rect.width * percent) / 100.0 + 0.5);
+	if (width > rect.width) {
+		width = rect.width;
+	}
+	if (width <= 0) {
+		// Anything under way at all gets a pixel rather than nothing:
+		// an empty cell and a 0.2% cell should not look identical.
+		width = 1;
+	}
+
+	CMuleColour top, bottom;
+	if (hashingProgress > 0) {
+		top = crHashingTop;
+		bottom = crHashingBottom;
+	} else {
+		top = CMuleColour(MuleTheme::GetProgressColour(false));
+		bottom = CMuleColour(MuleTheme::GetProgressColour(true));
+	}
+
+	if (file->IsStopped()) {
+		// A paused transfer keeps its bar -- the progress is still real
+		// -- but drops back so it stops competing with the files that
+		// are actually moving. The row's text greys out to match.
+		top.Blend(55);
+		bottom.Blend(55);
+	}
+
+	const wxRect bar(rect.x, rect.y, width, rect.height);
+
+	if (bFlat) {
+		// 3D depth at zero: no gradient, matching what that preference
+		// has always meant for the bars in this window.
+		dc->SetPen(*wxTRANSPARENT_PEN);
+		dc->SetBrush(bottom.GetBrush());
+		dc->DrawRectangle(bar);
+	} else {
+		dc->GradientFillLinear(bar, top, bottom, wxSOUTH);
+	}
+
+	return width;
 }
 
 #ifdef __WINDOWS__

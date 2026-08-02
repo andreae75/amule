@@ -197,9 +197,15 @@ private:
 	void	DrawFileItem( wxDC* dc, int nColumn, const wxRect& rect, FileCtrlItem_Struct* item ) const;
 
 	/**
-	 * Draws the status (chunk) bar for a file.
+	 * Draws the progress bar for a file, filled to its completed share.
+	 *
+	 * @param bFlat fill with a solid colour instead of a gradient --
+	 *              the 3D-depth preference at zero.
+	 * @return the width in pixels that was actually filled, so the
+	 *         caller can tell which part of the cell now has a bar under
+	 *         it and which still shows the row.
 	 */
-	void	DrawFileStatusBar( const CPartFile* file, wxDC* dc, const wxRect& rect, bool bFlat ) const;
+	int	DrawFileStatusBar( const CPartFile* file, wxDC* dc, const wxRect& rect, bool bFlat ) const;
 
 	static int wxCALLBACK SortProc(wxUIntPtr item1, wxUIntPtr item2, wxIntPtr sortData);
 	static int Compare( const CPartFile* file1, const CPartFile* file2, long lParamSort );
