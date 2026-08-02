@@ -105,10 +105,37 @@ namespace MuleTheme
 	 * each of them fills its own row background, and this is the single
 	 * definition they share.
 	 *
-	 * The step is small on purpose. Enough to separate two rows, not
-	 * enough to compete with the selection.
+	 * In a dark scheme the alternate band is a deep blue rather than a
+	 * lighter grey. A neutral step has to stay subtle or it reads as two
+	 * lists stitched together, and subtle is exactly what does not
+	 * survive a row of coloured status text drawn on top of it. A hue
+	 * change separates the bands at a glance without competing with the
+	 * foreground. A light scheme keeps the neutral step: there the rows
+	 * carry the platform's own colours and a blue band would be the one
+	 * thing on screen that came from nowhere.
 	 */
 	wxColour GetRowColour(bool alternate);
+
+	/**
+	 * The background of a list's column headers.
+	 *
+	 * Its own colour rather than BTNFACE, because the header has to sit
+	 * above both the window it is in and the rows below it -- three
+	 * surfaces, three values. Only meaningful when
+	 * NeedsOwnerDrawnHeader() is true; in a light scheme the platform
+	 * draws the header and this is never consulted.
+	 */
+	wxColour GetHeaderColour();
+
+	/**
+	 * One end of the gradient a progress bar is filled with -- the top
+	 * edge, or the bottom when @a bottom is set.
+	 *
+	 * The same blue in both schemes. A progress bar is not a surface the
+	 * UI sits on, it is a measurement drawn on one, and it stays legible
+	 * against either background.
+	 */
+	wxColour GetProgressColour(bool bottom);
 
 	/**
 	 * Whether the header of a list has to be painted by hand.
@@ -120,6 +147,29 @@ namespace MuleTheme
 	 * true the caller must draw the header itself.
 	 */
 	bool NeedsOwnerDrawnHeader();
+
+	/**
+	 * Paints @a window and everything under it in the current scheme.
+	 *
+	 * The owner-drawn lists pick the palette up on their own, because
+	 * they ask for every colour they use. Everything around them -- the
+	 * panels the panes sit on, the toolbar, the labels, the log pane --
+	 * is a stock wx control that asks the platform instead, and in
+	 * wxWidgets 3.2 there is no application-wide switch to redirect
+	 * that (3.3 adds MSWEnableDarkMode; see the note in GetColour()).
+	 * So the colours are pushed down the tree by hand.
+	 *
+	 * Only the classes known to honour a colour on MSW are touched --
+	 * see the body -- so buttons, choices and combo boxes keep their
+	 * native look rather than ending up with an unreadable half-themed
+	 * one. Call once the window's children all exist, and again on
+	 * anything built later.
+	 *
+	 * Does nothing unless the scheme is dark: a light scheme is the
+	 * platform's own colours, and setting them explicitly would only
+	 * freeze the window against a later system theme change.
+	 */
+	void ApplyToWindowTree(wxWindow* window);
 
 	/**
 	 * Asks the window manager to draw this window's title bar dark.

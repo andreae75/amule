@@ -1835,7 +1835,7 @@ void wxListHeaderWindow::OnPaint( wxPaintEvent &WXUNUSED(event) )
     if ( MuleTheme::NeedsOwnerDrawnHeader() )
     {
         dc.SetPen(*wxTRANSPARENT_PEN);
-        dc.SetBrush(wxBrush(MuleTheme::GetColour(wxSYS_COLOUR_BTNFACE)));
+        dc.SetBrush(wxBrush(MuleTheme::GetHeaderColour()));
         dc.DrawRectangle(0, 0, w, h);
     }
 
@@ -1873,7 +1873,7 @@ void wxListHeaderWindow::OnPaint( wxPaintEvent &WXUNUSED(event) )
         {
             const wxRect hdr(x, HEADER_OFFSET_Y, cw, ch);
             dc.SetPen(*wxTRANSPARENT_PEN);
-            dc.SetBrush(wxBrush(MuleTheme::GetColour(wxSYS_COLOUR_BTNFACE)));
+            dc.SetBrush(wxBrush(MuleTheme::GetHeaderColour()));
             dc.DrawRectangle(hdr);
 
             // A single divider on the trailing edge: without it the

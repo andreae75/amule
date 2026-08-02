@@ -311,6 +311,16 @@ private:
 
 	void Apply_Clients_Skin();
 	void Apply_Toolbar_Skin(wxToolBar *wndToolbar);
+
+#ifdef __WINDOWS__
+	/**
+	 * Hands wxFrame::CreateToolBar a toolbar that honours the colour
+	 * scheme's foreground. @see CMuleToolBar in amuleDlg.cpp.
+	 */
+	virtual wxToolBar* OnCreateToolBar(long style, wxWindowID id,
+		const wxString& name);
+#endif
+
 	bool Check_and_Init_Skin();
 	void Add_Skin_Icon(const wxString &iconName, const wxBitmap &stdIcon, bool useSkins);
 	void ToogleED2KLinksHandler();

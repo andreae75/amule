@@ -95,6 +95,81 @@
 #include "MacAppHelper.h"			// mac_set_accessory_mode
 #endif
 
+#ifdef __WINDOWS__
+#include <wx/msw/wrapwin.h>
+#include <commctrl.h>
+
+namespace {
+
+//! A toolbar that lets the colour scheme reach its labels.
+//!
+//! Every other control in the window takes a colour from
+//! MuleTheme::ApplyToWindowTree(). The native toolbar takes the
+//! background and drops the foreground on the floor: comctl32 paints the
+//! button labels itself, in the system text colour, which on a light
+//! Windows theme is near-black -- on a dark toolbar that is a row of
+//! captions you cannot read.
+//!
+//! There is exactly one way in, and it is NM_CUSTOMDRAW: ask for
+//! per-item notifications, fill in clrText, and return
+//! TBCDRF_USECDCOLORS to say "use the colours I just gave you". The base
+//! class is called first at both stages and its result folded in rather
+//! than replaced, so whatever wx does with custom draw for its own
+//! purposes keeps happening.
+class CMuleToolBar : public wxToolBar
+{
+public:
+	CMuleToolBar(wxWindow* parent, wxWindowID id, long style,
+			const wxString& name)
+		: wxToolBar(parent, id, wxDefaultPosition, wxDefaultSize,
+			style, name)
+	{ }
+
+protected:
+	virtual bool MSWOnNotify(int idCtrl, WXLPARAM lParam, WXLPARAM* result)
+	{
+		NMHDR* const hdr = reinterpret_cast<NMHDR*>(lParam);
+
+		if ((hdr == NULL) || (hdr->code != NM_CUSTOMDRAW)
+				|| !MuleTheme::IsDark()) {
+			return wxToolBar::MSWOnNotify(idCtrl, lParam, result);
+		}
+
+		LPNMTBCUSTOMDRAW tbcd = reinterpret_cast<LPNMTBCUSTOMDRAW>(lParam);
+
+		switch (tbcd->nmcd.dwDrawStage) {
+			case CDDS_PREPAINT: {
+				const bool handled =
+					wxToolBar::MSWOnNotify(idCtrl, lParam, result);
+				*result = (handled ? *result : CDRF_DODEFAULT)
+					| CDRF_NOTIFYITEMDRAW;
+				return true;
+			}
+
+			case CDDS_ITEMPREPAINT: {
+				const bool handled =
+					wxToolBar::MSWOnNotify(idCtrl, lParam, result);
+
+				const wxColour text =
+					MuleTheme::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+				tbcd->clrText =
+					RGB(text.Red(), text.Green(), text.Blue());
+				tbcd->clrTextHighlight = tbcd->clrText;
+
+				*result = (handled ? *result : CDRF_DODEFAULT)
+					| TBCDRF_USECDCOLORS;
+				return true;
+			}
+
+			default:
+				return wxToolBar::MSWOnNotify(idCtrl, lParam, result);
+		}
+	}
+};
+
+} // namespace
+#endif // __WINDOWS__
+
 #ifdef ENABLE_IP2COUNTRY			// That's no bug. MSVC has ENABLE_IP2COUNTRY always on,
 						// but dummy GeoIP.h turns ENABLE_IP2COUNTRY off again.
 void CamuleDlg::IP2CountryDownloadFinished(uint32 result)
@@ -197,7 +272,9 @@ m_clientSkinNames(CLIENT_SKIN_SIZE)
 	MuleTheme::SetScheme(static_cast<ColourScheme>(thePrefs::GetColourScheme()));
 
 	// The caption sits outside the client area, so no amount of painting
-	// reaches it -- it has to be asked for separately.
+	// reaches it -- it has to be asked for separately. Done again after
+	// Show() below: DWM only redraws the frame when it next has reason
+	// to, and a window that has never been mapped has no reason.
 	MuleTheme::ApplyTitleBar(this);
 
 	// Initialize skin names
@@ -363,7 +440,19 @@ m_clientSkinNames(CLIENT_SKIN_SIZE)
 		CreateSystray();
 	}
 
+	// Everything the frame contains exists by now, which is what this
+	// needs: it walks the tree and hands each control its colour. The
+	// lists already have theirs -- they ask for every colour they paint
+	// with -- but the panels, toolbar, labels and log pane around them
+	// are stock wx controls that would otherwise stay platform-light.
+	MuleTheme::ApplyToWindowTree(this);
+
 	Show(true);
+
+	// The frame now exists on screen, which is the first moment DWM has
+	// any reason to redraw its caption. Setting the attribute before
+	// that leaves it recorded but unpainted.
+	MuleTheme::ApplyTitleBar(this);
 
 	// Workaround for wxMSW: Create_Toolbar() above (and the Realize()
 	// inside Apply_Toolbar_Skin) runs before the frame is mapped at
@@ -1870,6 +1959,15 @@ void CamuleDlg::Apply_Toolbar_Skin(wxToolBar *wndToolbar)
 }
 
 
+#ifdef __WINDOWS__
+wxToolBar* CamuleDlg::OnCreateToolBar(long style, wxWindowID id,
+	const wxString& name)
+{
+	return new CMuleToolBar(this, id, style, name);
+}
+#endif
+
+
 void CamuleDlg::Create_Toolbar(bool orientation)
 {
 	Freeze();
@@ -1898,6 +1996,10 @@ void CamuleDlg::Create_Toolbar(bool orientation)
 	}
 
 	Apply_Toolbar_Skin(m_wndToolbar);
+
+	// The toolbar is rebuilt from scratch whenever its orientation
+	// changes, so a colour pushed into the old one does not carry over.
+	MuleTheme::ApplyToWindowTree(m_wndToolbar);
 
 	Thaw();
 

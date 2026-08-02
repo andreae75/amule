@@ -733,10 +733,13 @@ if (NEED_LIB_MULEAPPGUI)
 
 	if (WIN32)
 		# MuleTheme::ApplyTitleBar asks the desktop window manager for a
-		# dark caption (DwmSetWindowAttribute). PUBLIC for the same
+		# dark caption (DwmSetWindowAttribute), and ApplyToWindowTree
+		# switches visual styles off per control (SetWindowTheme, in
+		# uxtheme) so that check boxes and group boxes stop painting
+		# their own labels in the system colour. PUBLIC for the same
 		# reason as AUI above: amule and amulegui compile GUI_SOURCES
 		# into themselves, so they have to carry the link too.
-		target_link_libraries (muleappgui PUBLIC dwmapi)
+		target_link_libraries (muleappgui PUBLIC dwmapi uxtheme)
 	endif()
 
 	# generate_icon_data produces ${BINARY_DIR}/src/icons/icon_data.c,
